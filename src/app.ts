@@ -1,8 +1,11 @@
 import express, { Application, NextFunction, Request, Response } from 'express'
 import cors from 'cors'
 import httpStatus from 'http-status'
+import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import globalErrorHandler from './errors/globalErrorHandler'
+import ExpressMongoSanitize from 'express-mongo-sanitize'
+import routes from './routes'
 const app: Application = express()
 
 app.use(cors())
@@ -13,6 +16,15 @@ app.use(express.urlencoded({ extended: true }))
 
 //cookie parser
 app.use(cookieParser())
+
+// Enhancing Express.js security with Helmet middleware for essential HTTP header protection.
+app.use(helmet())
+
+// sanitize request data to remove unwanted characters from req.body, req.query, req.params ($, . etc ..)
+app.use(ExpressMongoSanitize())
+
+// application routes
+app.use('/api/v1', routes)
 
 //Testing
 app.get('/', async (req: Request, res: Response) => {

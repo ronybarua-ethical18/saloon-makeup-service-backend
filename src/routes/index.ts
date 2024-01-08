@@ -1,33 +1,22 @@
-// import express, { Router } from 'express'
-// import authRoute from '../modules/auth/auth.route'
-// import bookRoutes from "../modules/books/books.route"
-// import userRoutes from "../modules/users/users.route"
+import express, { Router } from 'express'
+import { AuthRoutes } from '../modules/auth/auth.route'
 
-// const router = express.Router()
+const router = express.Router()
 
-// type IRoute = {
-//   path: string
-//   route: Router
-// }
+type IRoute = {
+  path: string
+  route: Router
+}
 
-// const routeList: IRoute[] = [
-//   {
-//     path: '/auth',
-//     route: authRoute,
-//   },
-//   {
-//     path: '/books',
-//     route: bookRoutes,
-//   },
-//   {
-//     path: '/users',
-//     route: userRoutes,
-//   },
+const routeList: IRoute[] = [
+  {
+    path: '/auth',
+    route: AuthRoutes,
+  },
+]
 
-// ]
+routeList.forEach(route => {
+  router.use(route.path, route.route)
+})
 
-// routeList.forEach(route => {
-//   router.use(route.path, route.route)
-// })
-
-// export default router
+export default router
