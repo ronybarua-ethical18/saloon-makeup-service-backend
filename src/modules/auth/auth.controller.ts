@@ -22,13 +22,34 @@ const signUpUser = tryCatchAsync(async (req: Request, res: Response) => {
 })
 
 const verifyEmail = tryCatchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.verifyEmail(req.body)
+  const { token } = req.body
+  const result = await AuthService.verifyEmail(token)
 
   sendResponse<IUser>(res, {
     statusCode: 200,
     success: true,
     message: 'Email is verified successfully',
     data: result,
+  })
+})
+
+const forgotPassword = tryCatchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body
+  await AuthService.forgotPassword(email)
+
+  sendResponse<IUser>(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Verify your email to reset your password',
+  })
+})
+const resetPassword = tryCatchAsync(async (req: Request, res: Response) => {
+  await AuthService.resetPassword(req.body)
+
+  sendResponse<IUser>(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Password is set successfully',
   })
 })
 
@@ -78,4 +99,6 @@ export const AuthController = {
   signUpUser,
   refreshToken,
   verifyEmail,
+  forgotPassword,
+  resetPassword,
 }

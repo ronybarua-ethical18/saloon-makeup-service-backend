@@ -14,16 +14,23 @@ router.post(
   validateRequest(AuthValidation.signUpZodSchema),
   AuthController.signUpUser,
 )
-router.post(
-  '/verify-email',
-  validateRequest(AuthValidation.verifyEmailZodSchema),
-  AuthController.verifyEmail,
-)
+router.post('/forgot-password', AuthController.forgotPassword)
 
 router.post(
   '/refresh-token',
   validateRequest(AuthValidation.refreshTokenZodSchema),
   AuthController.refreshToken,
+)
+router.put(
+  '/verify-email',
+  validateRequest(AuthValidation.verifyEmailZodSchema),
+  AuthController.verifyEmail,
+)
+
+router.put(
+  '/reset-password',
+  validateRequest(AuthValidation.resetPasswordZodSchema),
+  AuthController.resetPassword,
 )
 
 // router.post(
