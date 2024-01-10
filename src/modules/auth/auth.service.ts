@@ -112,7 +112,7 @@ const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {
   }
 }
 
-const verifyEmail = async (token: string): Promise<IUser | null> => {
+const verifyEmail = async (token: string): Promise<void> => {
   console.log('token', token)
 
   const { userId } = jwtHelpers.verifyToken(token, config.jwt.secret as Secret)
@@ -121,10 +121,9 @@ const verifyEmail = async (token: string): Promise<IUser | null> => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
   }
-  const updatedUser = await UserModel.findByIdAndUpdate(user._id, {
+  await UserModel.findByIdAndUpdate(user._id, {
     isVerified: true,
   })
-  return updatedUser
 }
 
 const forgotPassword = async (email: string): Promise<IUser> => {

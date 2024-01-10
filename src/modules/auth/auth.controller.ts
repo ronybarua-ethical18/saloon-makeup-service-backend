@@ -23,13 +23,12 @@ const signUpUser = tryCatchAsync(async (req: Request, res: Response) => {
 
 const verifyEmail = tryCatchAsync(async (req: Request, res: Response) => {
   const { token } = req.body
-  const result = await AuthService.verifyEmail(token)
+  await AuthService.verifyEmail(token)
 
   sendResponse<IUser>(res, {
     statusCode: 200,
     success: true,
     message: 'Email is verified successfully',
-    data: result,
   })
 })
 
@@ -89,7 +88,7 @@ const refreshToken = tryCatchAsync(async (req: Request, res: Response) => {
   sendResponse<IRefreshTokenResponse>(res, {
     statusCode: 200,
     success: true,
-    message: 'User logged in successfully !',
+    message: 'New access token is generated!',
     data: result,
   })
 })
