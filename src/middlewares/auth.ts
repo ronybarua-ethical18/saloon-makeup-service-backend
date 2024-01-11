@@ -7,7 +7,7 @@ import { jwtHelpers } from '../helpers/jwtHelpers'
 
 const auth =
   (...requiredRoles: string[]) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, _res: Response, next: NextFunction) => {
     try {
       //get authorization token
       const token = req.headers.authorization
@@ -19,7 +19,7 @@ const auth =
 
       verifiedUser = jwtHelpers.verifyToken(token, config.jwt.secret as Secret)
 
-      req.user = verifiedUser // role  , userid
+      req.user = verifiedUser
 
       // set guard by role
       if (requiredRoles.length && !requiredRoles.includes(verifiedUser.role)) {

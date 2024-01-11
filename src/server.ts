@@ -35,8 +35,8 @@ const serverExitHandler = () => {
 }
 
 const unexpectedErrorHandler = (error: string) => {
-  throw new ApiError(500, error)
   serverExitHandler()
+  throw new ApiError(500, error)
 }
 
 process.on('uncaughtException', unexpectedErrorHandler)
