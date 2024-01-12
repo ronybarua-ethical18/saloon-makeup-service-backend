@@ -22,6 +22,7 @@ const signUpZodSchema = z.object({
     }),
   }),
 })
+
 const loginZodSchema = z.object({
   body: z.object({
     email: z.string({
