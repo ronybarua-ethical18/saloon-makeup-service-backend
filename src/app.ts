@@ -1,4 +1,5 @@
 import express, { Application, NextFunction, Request, Response } from 'express'
+import logger from 'morgan'
 import cors from 'cors'
 import httpStatus from 'http-status'
 import helmet from 'helmet'
@@ -16,6 +17,9 @@ app.use(express.urlencoded({ extended: true }))
 
 //cookie parser
 app.use(cookieParser())
+
+// logger
+app.use(logger('dev'))
 
 // Enhancing Express.js security with Helmet middleware for essential HTTP header protection.
 app.use(helmet())

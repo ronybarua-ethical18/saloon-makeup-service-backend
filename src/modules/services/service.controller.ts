@@ -4,6 +4,9 @@ import sendResponse from '../../shared/sendResponse'
 import mongoose from 'mongoose'
 import { SaloonService } from './service.service'
 import { IService } from './service.interface'
+import pick from '../../shared/pick'
+import { paginationFields } from '../../constants/pagination'
+import { filterableFields } from './service.constants'
 
 const createService = tryCatchAsync(async (req: Request, res: Response) => {
   const loggedUser = req.user as {
@@ -25,13 +28,20 @@ const getAllServices = tryCatchAsync(async (req: Request, res: Response) => {
     userId: mongoose.Types.ObjectId
     role: string
   }
-  const result = await SaloonService.getAllServices(loggedUser)
+  const filterOptions = pick(req.query, filterableFields)
+  const queryOptions = pick(req.query, paginationFields)
+  const result = await SaloonService.getAllServices(
+    loggedUser,
+    queryOptions,
+    filterOptions,
+  )
 
   sendResponse<IService[]>(res, {
     statusCode: 200,
     success: true,
     message: 'All services fetched successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   })
 })
 

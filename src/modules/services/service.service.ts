@@ -1,10 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status'
 import ApiError from '../../errors/ApiError'
 import { IService } from './service.interface'
 import { ServiceModel } from './service.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-import mongoose from 'mongoose'
+import mongoose, { SortOrder } from 'mongoose'
+import { paginationHelpers } from '../../helpers/pagination'
+import {
+  IFilterOptions,
+  IGenericResponse,
+  IPaginationOptions,
+} from '../../shared/interfaces/common.interface'
+import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
 
 const createService = async (
   loggedUser: JwtPayload,
@@ -96,17 +104,51 @@ const deleteService = async (
   }
 }
 
-const getAllServices = async (loggedUser: JwtPayload): Promise<IService[]> => {
-  let queryPayload = { seller: loggedUser.userId } as object
+const getAllServices = async (
+  loggedUser: JwtPayload,
+  queryOptions: IPaginationOptions,
+  filterOptions: IFilterOptions,
+): Promise<IGenericResponse<IService[]>> => {
+  let queryPayload = { seller: loggedUser.userId } as any
   if (
     loggedUser.role === ENUM_USER_ROLE.ADMIN ||
     loggedUser.role === ENUM_USER_ROLE.SUPER_ADMIN
   ) {
     queryPayload = {}
   }
+  const { searchTerm, ...filterableFields } = filterOptions
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelpers.calculatePagination(queryOptions)
+
+  const sortCondition: { [key: string]: SortOrder } = {}
+
+  if (sortBy && sortOrder) {
+    sortCondition[sortBy] = sortOrder
+  }
+
+  const queriesWithFilterableFields = queryFieldsManipulation(
+    searchTerm,
+    filterableFields,
+  )
+
+  if (queriesWithFilterableFields.length) {
+    queryPayload.$and = queriesWithFilterableFields
+  }
 
   const services = await ServiceModel.find(queryPayload)
-  return services
+    .sort(sortCondition)
+    .skip(skip)
+    .limit(limit)
+
+  const total = await ServiceModel.countDocuments()
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: services,
+  }
 }
 
 export const SaloonService = {
