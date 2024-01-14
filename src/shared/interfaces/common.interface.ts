@@ -29,3 +29,9 @@ export interface IFilterOptions {
   category?: string
   subCategory?: string
 }
+
+export interface IShopFilterOptions {
+  searchTerm?: string
+  shopName?: string
+  location?: string
+}

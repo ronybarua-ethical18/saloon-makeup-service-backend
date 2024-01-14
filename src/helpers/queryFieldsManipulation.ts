@@ -1,15 +1,17 @@
-import { IFilterOptions } from '../shared/interfaces/common.interface'
+import {
+  IFilterOptions,
+  IShopFilterOptions,
+} from '../shared/interfaces/common.interface'
 
 export const queryFieldsManipulation = (
   searchTerm: string | undefined,
-  filterableFields: IFilterOptions,
+  filterableFields: IFilterOptions | IShopFilterOptions,
+  searchableFields: Array<string>,
 ) => {
   const andConditions = []
-  const serviceSearchableFields = ['name', 'category', 'subCategory']
-
   if (searchTerm) {
     andConditions.push({
-      $or: serviceSearchableFields.map(field => ({
+      $or: searchableFields.map(field => ({
         [field]: { $regex: searchTerm, $options: 'i' },
       })),
     })

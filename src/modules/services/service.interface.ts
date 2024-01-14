@@ -11,6 +11,12 @@ interface IReviews {
   date: Date
 }
 
+export enum ServiceStatusList {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 export interface IService {
   name: string
   category: CATEGORIES
@@ -20,7 +26,10 @@ export interface IService {
   description: string
   availability?: boolean
   seller: mongoose.Types.ObjectId
+  shop: mongoose.Types.ObjectId
+  status: ServiceStatusList
   reviews: IReviews[]
+  notes?: string
 }
 
 export interface IServiceDocument extends IService, Document {}

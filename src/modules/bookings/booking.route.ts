@@ -1,9 +1,9 @@
 import express from 'express'
 import auth from '../../middlewares/auth'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-import { SaloonServiceController } from './service.controller'
+import { SaloonServiceController } from './booking.controller'
 import validateRequest from '../../middlewares/validateRequest'
-import { ServiceValidation } from './service.validation'
+import { ServiceValidation } from './booking.validation'
 const router = express.Router()
 
 router.post(
@@ -11,12 +11,6 @@ router.post(
   auth(ENUM_USER_ROLE.SELLER),
   validateRequest(ServiceValidation.ServiceZodSchema),
   SaloonServiceController.createService,
-)
-
-router.post(
-  '/update-many',
-  auth(ENUM_USER_ROLE.SUPER_ADMIN),
-  SaloonServiceController.updateManyServices,
 )
 
 router.get(

@@ -14,7 +14,7 @@ const ServiceZodSchema = z.object({
     ),
     description: z.string({ required_error: 'Description required' }),
     availability: z.boolean().optional(),
-    shop: z.string({ required_error: 'Shop ID is required' }),
+    //   seller: z.string({ required_error: 'Seller ID is required' }),
     reviews: z
       .array(
         z.object({

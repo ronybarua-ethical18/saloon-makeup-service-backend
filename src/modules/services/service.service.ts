@@ -129,6 +129,7 @@ const getAllServices = async (
   const queriesWithFilterableFields = queryFieldsManipulation(
     searchTerm,
     filterableFields,
+    ['name', 'category', 'subCategory'],
   )
 
   if (queriesWithFilterableFields.length) {

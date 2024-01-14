@@ -7,6 +7,8 @@ import { IService } from './service.interface'
 import pick from '../../shared/pick'
 import { paginationFields } from '../../constants/pagination'
 import { filterableFields } from './service.constants'
+import { ServiceModel } from './service.model'
+import ShopModel from '../shop/shop.model'
 
 const createService = tryCatchAsync(async (req: Request, res: Response) => {
   const loggedUser = req.user as {
@@ -100,10 +102,41 @@ const deleteService = tryCatchAsync(async (req: Request, res: Response) => {
   }
 })
 
+const updateManyServices = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  const shops = await ShopModel.find({})
+  const services = await ServiceModel.find({})
+
+  Promise.all(
+    services.map(async service => {
+      const shop = shops.find(
+        shop => shop.seller.toString() === service.seller.toString(),
+      )
+
+      if (shop) {
+        await ServiceModel.findOneAndUpdate(
+          { _id: service._id },
+          { shop: shop._id },
+          { new: true },
+        )
+      }
+    }),
+  )
+
+  sendResponse<IService>(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Services updated successfully',
+  })
+}
+
 export const SaloonServiceController = {
   createService,
   getAllServices,
   getService,
   updateService,
   deleteService,
+  updateManyServices,
 }
