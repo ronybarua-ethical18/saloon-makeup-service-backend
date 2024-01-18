@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose'
-import { BookingStatusList, IBooking } from './booking.interface'
+import { BookingStatusList, DayOfWeeks, IBooking } from './booking.interface'
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -9,7 +9,7 @@ const bookingSchema = new mongoose.Schema(
     serviceId: { type: Schema.Types.ObjectId, ref: 'service', required: true },
     serviceStartTime: { type: String, required: true },
     serviceEndTime: { type: String, required: true },
-    serviceDayOfWeek: { type: String, required: true },
+    serviceDayOfWeek: { type: String, enum: DayOfWeeks, required: true },
     status: {
       type: String,
       enum: BookingStatusList,

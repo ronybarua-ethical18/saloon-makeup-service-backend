@@ -1,4 +1,11 @@
 import mongoose, { Document } from 'mongoose'
+import { DayOfWeeks } from '../bookings/booking.interface'
+
+interface IServiceTime {
+  openingHour: string
+  closingHour: string
+  offDays: DayOfWeeks[]
+}
 
 // Interface for the shop document
 export interface IShopDocument extends Document {
@@ -6,6 +13,6 @@ export interface IShopDocument extends Document {
   shopDescription: string
   location: string
   seller: mongoose.Types.ObjectId
-  openingHours: { weekday: string; startTime: string; endTime: string }[]
+  serviceTime: IServiceTime
   gallery: string[]
 }

@@ -1,40 +1,54 @@
 import express from 'express'
 import auth from '../../middlewares/auth'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-import { SaloonServiceController } from './booking.controller'
 import validateRequest from '../../middlewares/validateRequest'
-import { ServiceValidation } from './booking.validation'
+import { BookingValidation } from './booking.validation'
+import { BookingController } from './booking.controller'
 const router = express.Router()
 
 router.post(
   '/',
-  auth(ENUM_USER_ROLE.SELLER),
-  validateRequest(ServiceValidation.ServiceZodSchema),
-  SaloonServiceController.createService,
+  auth(ENUM_USER_ROLE.CUSTOMER),
+  validateRequest(BookingValidation.createBookingZodSchema),
+  BookingController.createBooking,
 )
-
 router.get(
   '/',
-  auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-  SaloonServiceController.getAllServices,
+  auth(
+    ENUM_USER_ROLE.SELLER,
+    ENUM_USER_ROLE.ADMIN,
+    ENUM_USER_ROLE.SUPER_ADMIN,
+    ENUM_USER_ROLE.CUSTOMER,
+  ),
+  BookingController.getAllBookings,
 )
 
 router.get(
-  '/:serviceId',
-  auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-  SaloonServiceController.getService,
+  '/:bookingId',
+  auth(
+    ENUM_USER_ROLE.SELLER,
+    ENUM_USER_ROLE.ADMIN,
+    ENUM_USER_ROLE.SUPER_ADMIN,
+    ENUM_USER_ROLE.CUSTOMER,
+  ),
+  BookingController.getBooking,
 )
 
 router.patch(
   '/:serviceId',
-  auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-  SaloonServiceController.updateService,
+  auth(
+    ENUM_USER_ROLE.SELLER,
+    ENUM_USER_ROLE.ADMIN,
+    ENUM_USER_ROLE.SUPER_ADMIN,
+    ENUM_USER_ROLE.CUSTOMER,
+  ),
+  BookingController.updateBooking,
 )
 
 router.delete(
   '/:serviceId',
   auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-  SaloonServiceController.deleteService,
+  BookingController.deleteBooking,
 )
 
-export const SaloonServiceRoutes = router
+export const BookingRoutes = router

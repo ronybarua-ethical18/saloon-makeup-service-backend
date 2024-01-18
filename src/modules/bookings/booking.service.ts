@@ -1,151 +1,219 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import httpStatus from 'http-status'
-// import ApiError from '../../errors/ApiError'
-// import { BookingStatusList, IBooking, IService } from './booking.interface'
-// import BookingModel, { ServiceModel } from './booking.model'
-// import { JwtPayload } from 'jsonwebtoken'
-// import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-// import mongoose, { SortOrder } from 'mongoose'
-// import { paginationHelpers } from '../../helpers/pagination'
-// import {
-//   IFilterOptions,
-//   IGenericResponse,
-//   IPaginationOptions,
-// } from '../../shared/interfaces/common.interface'
-// import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import httpStatus from 'http-status'
+import moment from 'moment'
+import ApiError from '../../errors/ApiError'
+import { IBooking } from './booking.interface'
+import BookingModel from './booking.model'
+import { JwtPayload } from 'jsonwebtoken'
+import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
+import mongoose, { SortOrder } from 'mongoose'
+import { paginationHelpers } from '../../helpers/pagination'
+import {
+  IFilterOptions,
+  IGenericResponse,
+  IPaginationOptions,
+} from '../../shared/interfaces/common.interface'
+import {
+  areBothTimesInBetween,
+  bookingsAggregationPipeline,
+} from './booking.utils'
+import ShopModel from '../shop/shop.model'
+import { IShopDocument } from '../shop/shop.interface'
 
-// const createBooking = async (
-//   loggedUser: JwtPayload,
-//   bookingPayload: IBooking,
-// ): Promise<IBooking> => {
-//   if (loggedUser.role === ENUM_USER_ROLE.CUSTOMER) {
-//     const serviceMatch = await BookingModel.findOne({
-//       serviceId: bookingPayload.serviceId,
-//       seller: bookingPayload.seller,
-//       appointMentDateTime: bookingPayload.appointMentDateTime,
-//       status: BookingStatusList.PENDING,
-//     })
+const createBooking = async (
+  loggedUser: JwtPayload,
+  bookingPayload: IBooking,
+): Promise<any> => {
+  if (loggedUser.role === ENUM_USER_ROLE.CUSTOMER) {
+    const shop = (await ShopModel.findOne({
+      _id: bookingPayload.shop,
+    })) as IShopDocument
 
-//     if(serviceMatch){
-//       throw new ApiError(httpStatus.CONFLICT, 'The service is not available with the time frame')
-//     }
-//   } else {
-//     throw new ApiError(httpStatus.BAD_REQUEST, 'You are not a customer')
-//   }
-// }
+    if (shop?.serviceTime.offDays.includes(bookingPayload.serviceDayOfWeek)) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `The shop is closed on ${bookingPayload.serviceDayOfWeek}`,
+      )
+    }
 
-// const getService = async (
-//   serviceId: mongoose.Types.ObjectId,
-// ): Promise<IService> => {
-//   const service = await ServiceModel.findById({ _id: serviceId })
+    if (
+      !areBothTimesInBetween(
+        bookingPayload.serviceStartTime,
+        bookingPayload.serviceEndTime,
+        shop?.serviceTime?.openingHour,
+        shop?.serviceTime?.closingHour,
+      )
+    ) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        'The shop does not offer any services during this time slot.',
+      )
+    }
 
-//   if (!service) {
-//     throw new ApiError(httpStatus.NOT_FOUND, 'Service not found')
-//   }
+    const alreadyBookedServiceOnDay = await BookingModel.find({
+      serviceId: bookingPayload.serviceId,
+      seller: bookingPayload.seller,
+      shop: bookingPayload.shop,
+      serviceDayOfWeek: bookingPayload.serviceDayOfWeek,
+    })
 
-//   return service
-// }
-// const updateService = async (
-//   loggedUser: JwtPayload,
-//   serviceId: mongoose.Types.ObjectId,
-//   updatePayload: object,
-// ): Promise<IService | null> => {
-//   const queryPayload = {
-//     _id: serviceId,
-//   } as {
-//     _id: mongoose.Types.ObjectId
-//     seller: mongoose.Types.ObjectId
-//   }
-//   if (loggedUser.role === ENUM_USER_ROLE.SELLER) {
-//     queryPayload.seller = loggedUser.userId
-//   }
-//   const service = await ServiceModel.findOne(queryPayload)
+    const existingBookingSlots = alreadyBookedServiceOnDay?.map(booking => {
+      return {
+        serviceStartTime: booking.serviceStartTime,
+        serviceEndTime: booking.serviceEndTime,
+        serviceDayOfWeek: booking.serviceDayOfWeek,
+      }
+    })
 
-//   if (!service) {
-//     throw new ApiError(httpStatus.NOT_FOUND, 'Service not found')
-//   }
-//   const updateService = await ServiceModel.findByIdAndUpdate(
-//     { _id: serviceId },
-//     { ...updatePayload },
-//     { new: true },
-//   )
+    for (const slot of existingBookingSlots) {
+      const existingBookingSlotStartTime = moment(
+        slot.serviceStartTime,
+        'HH:mm',
+      )
+      const existingBookingSlotEndTime = moment(slot.serviceEndTime, 'HH:mm')
+      const newBookingSlotStartTime = moment(
+        bookingPayload.serviceStartTime,
+        'HH:mm',
+      )
+      const newBookingSlotEndTime = moment(
+        bookingPayload.serviceEndTime,
+        'HH:mm',
+      )
 
-//   return updateService
-// }
+      if (
+        newBookingSlotStartTime <= existingBookingSlotEndTime &&
+        newBookingSlotEndTime >= existingBookingSlotStartTime
+      ) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          'The service has already been booked for the requested time slot.',
+        )
+      }
+    }
 
-// const deleteService = async (
-//   loggedUser: JwtPayload,
-//   serviceId: mongoose.Types.ObjectId,
-// ): Promise<void> => {
-//   const queryPayload: {
-//     _id: mongoose.Types.ObjectId
-//     seller?: mongoose.Types.ObjectId
-//   } = {
-//     _id: serviceId,
-//   }
+    const booking = await BookingModel.create({
+      ...bookingPayload,
+      customer: loggedUser.userId,
+    })
 
-//   if (loggedUser.role === ENUM_USER_ROLE.SELLER) {
-//     queryPayload.seller = loggedUser.userId
-//   }
+    return booking
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'You are not a customer')
+  }
+}
 
-//   const service = await ServiceModel.findOneAndDelete(queryPayload)
+const getBooking = async (
+  bookingId: mongoose.Types.ObjectId,
+): Promise<IBooking> => {
+  const booking = await BookingModel.findById({ _id: bookingId })
 
-//   if (!service) {
-//     throw new ApiError(httpStatus.NOT_FOUND, 'Service not found')
-//   }
-// }
+  if (!booking) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Booking not found')
+  }
 
-// const getAllServices = async (
-//   loggedUser: JwtPayload,
-//   queryOptions: IPaginationOptions,
-//   filterOptions: IFilterOptions,
-// ): Promise<IGenericResponse<IService[]>> => {
-//   let queryPayload = { seller: loggedUser.userId } as any
-//   if (
-//     loggedUser.role === ENUM_USER_ROLE.ADMIN ||
-//     loggedUser.role === ENUM_USER_ROLE.SUPER_ADMIN
-//   ) {
-//     queryPayload = {}
-//   }
-//   const { searchTerm, ...filterableFields } = filterOptions
-//   const { page, limit, skip, sortBy, sortOrder } =
-//     paginationHelpers.calculatePagination(queryOptions)
+  return booking
+}
+const updateBooking = async (
+  loggedUser: JwtPayload,
+  bookingId: mongoose.Types.ObjectId,
+  updatePayload: object,
+): Promise<IBooking | null> => {
+  let query
 
-//   const sortCondition: { [key: string]: SortOrder } = {}
+  if (loggedUser.role === 'admin' || loggedUser.role === 'super_admin') {
+    query = { _id: bookingId }
+  } else {
+    query = {
+      $or: [
+        { _id: bookingId, customer: loggedUser.userId },
+        { _id: bookingId, seller: loggedUser.userId },
+      ],
+    }
+  }
 
-//   if (sortBy && sortOrder) {
-//     sortCondition[sortBy] = sortOrder
-//   }
+  const booking = await BookingModel.findOne(query)
 
-//   const queriesWithFilterableFields = queryFieldsManipulation(
-//     searchTerm,
-//     filterableFields,
-//   )
+  if (!booking) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Booking not found')
+  }
+  const updateBooking = await BookingModel.findByIdAndUpdate(
+    { _id: bookingId },
+    { ...updatePayload },
+    { new: true },
+  )
 
-//   if (queriesWithFilterableFields.length) {
-//     queryPayload.$and = queriesWithFilterableFields
-//   }
+  return updateBooking
+}
 
-//   const services = await ServiceModel.find(queryPayload)
-//     .sort(sortCondition)
-//     .skip(skip)
-//     .limit(limit)
+const deleteBooking = async (
+  bookingId: mongoose.Types.ObjectId,
+): Promise<void> => {
+  const booking = await BookingModel.findOneAndDelete({ _id: bookingId })
 
-//   const total = await ServiceModel.countDocuments()
-//   return {
-//     meta: {
-//       page,
-//       limit,
-//       total,
-//     },
-//     data: services,
-//   }
-// }
+  if (!booking) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Booking not found')
+  }
+}
 
-// export const SaloonService = {
-//   createService,
-//   getService,
-//   updateService,
-//   deleteService,
-//   getAllServices,
-// }
+const getAllBookings = async (
+  loggedUser: JwtPayload,
+  queryOptions: IPaginationOptions,
+  filterOptions: IFilterOptions,
+): Promise<IGenericResponse<IBooking[]>> => {
+  let queryPayload = {
+    $or: [{ seller: loggedUser.userId }, { customer: loggedUser.userId }],
+  } as any
+  if (
+    loggedUser.role === ENUM_USER_ROLE.ADMIN ||
+    loggedUser.role === ENUM_USER_ROLE.SUPER_ADMIN
+  ) {
+    queryPayload = {}
+  }
+  const { searchTerm } = filterOptions as any
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelpers.calculatePagination(queryOptions)
+
+  const sortCondition: { [key: string]: SortOrder } = {}
+
+  if (sortBy && sortOrder) {
+    sortCondition[sortBy] = sortOrder
+  }
+
+  let bookings
+
+  if (searchTerm) {
+    const nameRegex: RegExp = new RegExp(searchTerm, 'i')
+
+    bookings = await BookingModel.aggregate(
+      bookingsAggregationPipeline(nameRegex),
+    )
+  } else {
+    bookings = await BookingModel.find(queryPayload)
+      .sort(sortCondition)
+      .limit(limit)
+      .skip(skip)
+      .populate('customer')
+      .populate('seller')
+      .populate('serviceId')
+      .populate('shop')
+  }
+
+  const total = await BookingModel.countDocuments()
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: bookings,
+  }
+}
+
+export const SaloonService = {
+  createBooking,
+  getAllBookings,
+  getBooking,
+  updateBooking,
+  deleteBooking,
+}

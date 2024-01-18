@@ -128,8 +128,8 @@ const getAllServices = async (
 
   const queriesWithFilterableFields = queryFieldsManipulation(
     searchTerm,
-    filterableFields,
     ['name', 'category', 'subCategory'],
+    filterableFields,
   )
 
   if (queriesWithFilterableFields.length) {

@@ -7,6 +7,16 @@ export enum BookingStatusList {
   COMPLETED = 'COMPLETED',
 }
 
+export enum DayOfWeeks {
+  FRIDAY = 'FRIDAY',
+  SATURDAY = 'SATURDAY',
+  SUNDAY = 'SUNDAY',
+  MONDAY = 'MONDAY',
+  TUESDAY = 'TUESDAY',
+  WEDNESDAY = 'WEDNESDAY',
+  THURSDAY = 'THURSDAY',
+}
+
 // Interface for the booking document
 export interface IBooking extends Document {
   customer: mongoose.Types.ObjectId
@@ -15,7 +25,7 @@ export interface IBooking extends Document {
   serviceId: mongoose.Types.ObjectId
   serviceStartTime: string
   serviceEndTime: string
-  serviceDayOfWeek: string
+  serviceDayOfWeek: DayOfWeeks
   status: BookingStatusList
   notes: string
 }

@@ -51,6 +51,6 @@ serviceSchema.statics.findByName = async function (
 }
 
 export const ServiceModel = mongoose.model<IServiceDocument, IServiceModel>(
-  'Service',
+  'service',
   serviceSchema,
 )

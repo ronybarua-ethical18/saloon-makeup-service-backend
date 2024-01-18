@@ -114,8 +114,8 @@ const getAllShop = async (
 
     const queriesWithFilterableFields = queryFieldsManipulation(
       searchTerm,
-      filterableFields,
       ['shopName', 'location'],
+      filterableFields,
     )
 
     if (queriesWithFilterableFields.length) {

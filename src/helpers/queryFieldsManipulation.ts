@@ -5,8 +5,8 @@ import {
 
 export const queryFieldsManipulation = (
   searchTerm: string | undefined,
-  filterableFields: IFilterOptions | IShopFilterOptions,
   searchableFields: Array<string>,
+  filterableFields: IFilterOptions | IShopFilterOptions,
 ) => {
   const andConditions = []
   if (searchTerm) {
