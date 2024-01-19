@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose'
 import { BookingStatusList, DayOfWeeks, IBooking } from './booking.interface'
 
-const bookingSchema = new mongoose.Schema(
+const bookingSchema = new mongoose.Schema<IBooking>(
   {
     customer: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     seller: { type: Schema.Types.ObjectId, ref: 'user', required: true },
