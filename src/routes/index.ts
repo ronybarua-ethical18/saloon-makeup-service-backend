@@ -6,6 +6,7 @@ import { ShopRoutes } from '../modules/shop/shop.route'
 import { BookingRoutes } from '../modules/bookings/booking.route'
 import { FeedbackRoutes } from '../modules/feedbacks/feedback.route'
 import { FAQRoutes } from '../modules/faq/faq.route'
+import { BlogRoutes } from '../modules/blogs/blog.route'
 
 const router = express.Router()
 
@@ -42,6 +43,10 @@ const routeList: IRoute[] = [
   {
     path: '/faqs',
     route: FAQRoutes,
+  },
+  {
+    path: '/blogs',
+    route: BlogRoutes,
   },
 ]
 
