@@ -1,9 +1,13 @@
-import path from 'path'
 import multer from 'multer'
+import { CloudinaryStorage } from 'multer-storage-cloudinary'
+import cloudinary from '../config/cloudinary'
 
-const upload = multer({
-  dest: path.resolve(__dirname, '../public/uploads'),
-  limits: { fileSize: 3e7 },
+// Configure Multer to use Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
 })
+
+// Create Multer instance with Cloudinary storage
+const upload = multer({ storage: storage })
 
 export default upload

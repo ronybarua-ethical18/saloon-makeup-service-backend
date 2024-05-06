@@ -1,5 +1,3 @@
-import path from 'path'
-import fs from 'fs'
 import { Request, Response } from 'express'
 import cloudinary from '../../config/cloudinary'
 import ApiError from '../../errors/ApiError'
@@ -7,33 +5,43 @@ import httpStatus from 'http-status'
 import sendResponse from '../../shared/sendResponse'
 
 const uploadFile = async (req: Request, res: Response) => {
-  const files = req.files as { [fieldName: string]: Express.Multer.File[] }
-  const fileMimeType = files.img[0].mimetype.split('/').at(-1)
-  const fileName = files.img[0].filename
-  const filePath = path.resolve(__dirname, '../../public/uploads', fileName)
+  try {
+    if (!req.file) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'No file uploaded')
+    }
 
-  const uploadResult = await cloudinary.uploader.upload(filePath, {
-    filename_override: fileName,
-    format: fileMimeType,
-    folder: 'images',
-  })
+    const { originalname, path, mimetype } = req.file
 
-  if (!uploadResult) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      'Something went wrong uploading file',
-    )
+    const uploadResult = await cloudinary.uploader.upload(path, {
+      folder: 'images',
+      public_id: originalname,
+      resource_type: 'auto',
+      format: mimetype.split('/').at(-1),
+    })
+
+    if (!uploadResult) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        'Something went wrong uploading file',
+      )
+    }
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'File uploaded successfully',
+      data: uploadResult.secure_url,
+    })
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    sendResponse(res, {
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: 'Failed to upload file',
+      data: error,
+    })
   }
-
-  // delete temp files
-  await fs.promises.unlink(filePath)
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'File uploaded successfully',
-    data: uploadResult.secure_url,
-  })
 }
 
 export default uploadFile
+;``

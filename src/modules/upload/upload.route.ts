@@ -16,7 +16,7 @@ router.post(
   //     ENUM_USER_ROLE.SUPER_ADMIN,
   //   ),
   validateRequest(uploadFileZodSchema.uploadFileSchema),
-  upload.fields([{ name: 'img', maxCount: 1 }]),
+  upload.single('img'),
   uploadFile,
 )
 
