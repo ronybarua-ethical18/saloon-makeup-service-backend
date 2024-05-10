@@ -26,4 +26,8 @@ export default {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   },
+  vercel: {
+    org_id: process.env.VERCEL_ORG_ID,
+    project_id: process.env.VERCEL_PROJECT_ID,
+  },
 }
