@@ -32,7 +32,7 @@ app.use('/api/v1', routes)
 
 //Testing
 app.get('/', async (req: Request, res: Response) => {
-  res.send('Working Successfully With github actions integration server')
+  res.send('Working Successfully With github actions with preview mode')
 })
 
 //handle not found
