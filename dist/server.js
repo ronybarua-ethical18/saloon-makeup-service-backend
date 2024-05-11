@@ -19,7 +19,7 @@ function getMongoUrl() {
 const url = getMongoUrl() || '';
 //server connect
 mongoose_1.default.connect(url).then(() => {
-    console.log('<===== Database Connected Successfully ! =====>');
+    console.log('<===== Database Connected Successfully Yahoo! =====>');
     server = app_1.default.listen(index_1.default.port, () => {
         console.log(`Listening to port ${index_1.default.port}`);
     });
