@@ -18,7 +18,7 @@ const url: string = getMongoUrl() || ''
 
 //server connect
 mongoose.connect(url).then(() => {
-  console.log('<===== Database Connected Successfully ! =====>')
+  console.log('<===== Database Connected Successfully yeah! =====>')
   server = app.listen(config.port, () => {
     console.log(`Listening to port ${config.port}`)
   })
