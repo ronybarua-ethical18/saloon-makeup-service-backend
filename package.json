@@ -13,8 +13,9 @@
     "prettier:check": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "prettier:fix": "prettier --write .",
     "lint-prettier": "yarn lint:check && yarn prettier:check",
-    "build": "tsc"
+    "build": "cp package.json dist && cp -R ./node_modules ./dist && tsc"
   },
+  
   "lint-staged": {
     "src/**/*.ts": "yarn lint-prettier"
   },
