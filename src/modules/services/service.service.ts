@@ -13,6 +13,7 @@ import {
   IPaginationOptions,
 } from '../../shared/interfaces/common.interface'
 import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
+import { createWorker } from '../../workers/workerHandler'
 
 const createService = async (
   loggedUser: JwtPayload,
@@ -141,7 +142,7 @@ const getAllServices = async (
     .skip(skip)
     .limit(limit)
 
-  const total = await ServiceModel.countDocuments()
+  const total: any = await createWorker()
   return {
     meta: {
       page,

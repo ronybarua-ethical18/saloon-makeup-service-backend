@@ -9,7 +9,7 @@ import ExpressMongoSanitize from 'express-mongo-sanitize'
 import routes from './routes'
 const app: Application = express()
 
-app.use(cors())
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
 
 //parser
 app.use(express.json())

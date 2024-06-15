@@ -38,6 +38,28 @@ const getAllServices = tryCatchAsync(async (req: Request, res: Response) => {
     filterOptions,
   )
 
+  // const isExistsInRedis = await redis.exists('services')
+
+  // if (isExistsInRedis) {
+  //   const redisData: any = await redis.get('services')
+
+  //   const parsedData = JSON.parse(redisData)
+
+  //   return sendResponse<IService[]>(res, {
+  //     statusCode: 200,
+  //     success: true,
+  //     message: 'All services fetched successfully from redis',
+  //     meta: parsedData.meta,
+  //     data: parsedData.data,
+  //   })
+  // }
+
+  // // Serialize the data to a JSON string
+  // const dataToCache = JSON.stringify({name:"rony"})
+
+  // // Store the data in Redis
+  // await redis.set('services', dataToCache)
+
   sendResponse<IService[]>(res, {
     statusCode: 200,
     success: true,

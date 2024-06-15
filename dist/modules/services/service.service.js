@@ -11,6 +11,7 @@ const service_model_1 = require("./service.model");
 const user_enum_1 = require("../../shared/enums/user.enum");
 const pagination_1 = require("../../helpers/pagination");
 const queryFieldsManipulation_1 = require("../../helpers/queryFieldsManipulation");
+const workerHandler_1 = require("../../workers/workerHandler");
 const createService = async (loggedUser, servicePayload) => {
     if (loggedUser.role === user_enum_1.ENUM_USER_ROLE.SELLER) {
         const standardizedServiceName = servicePayload.name.toLowerCase();
@@ -80,10 +81,7 @@ const getAllServices = async (loggedUser, queryOptions, filterOptions) => {
     if (queriesWithFilterableFields.length) {
         queryPayload.$and = queriesWithFilterableFields;
     }
-    const services = await service_model_1.ServiceModel.find(queryPayload)
-        .sort(sortCondition)
-        .skip(skip)
-        .limit(limit);
+    const services = await (0, workerHandler_1.createWorker)(queryPayload, sortCondition, skip, limit);
     const total = await service_model_1.ServiceModel.countDocuments();
     return {
         meta: {

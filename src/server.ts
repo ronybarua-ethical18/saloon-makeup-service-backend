@@ -3,6 +3,7 @@ import config from './config/index'
 import app from './app'
 import ApiError from './errors/ApiError'
 import http from 'http'
+// import { redis } from './config/redis'
 
 let server: http.Server
 
@@ -33,6 +34,13 @@ const serverExitHandler = () => {
     process.exit(1)
   }
 }
+
+// redis connect
+// redis.on('connect', () =>{
+//   console.log('Redis connected')
+// })
+
+//  redis.set("test", JSON.stringify({test:"Test value 2"}))
 
 const unexpectedErrorHandler = (error: string) => {
   serverExitHandler()

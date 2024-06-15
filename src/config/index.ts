@@ -30,4 +30,9 @@ export default {
     org_id: process.env.VERCEL_ORG_ID,
     project_id: process.env.VERCEL_PROJECT_ID,
   },
+  redis: {
+    redis_password: process.env.REDIS_PASSWORD,
+    redis_host: process.env.REDIS_HOST,
+    redis_port: process.env.REDIS_PORT,
+  },
 }

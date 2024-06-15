@@ -15,7 +15,7 @@ router.post(
 
 router.post(
   '/update-many',
-  auth(ENUM_USER_ROLE.SUPER_ADMIN),
+  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
   SaloonServiceController.updateManyServices,
 )
 
