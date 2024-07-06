@@ -3,4 +3,5 @@ export const filterableFields = [
   'name',
   'category',
   'subCategory',
+  'status',
 ]

@@ -25,5 +25,7 @@ export const queryFieldsManipulation = (
     })
   }
 
+  console.log('and conditions', filterableFields)
+
   return andConditions
 }

@@ -13,7 +13,8 @@ import {
   IPaginationOptions,
 } from '../../shared/interfaces/common.interface'
 import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
-import { createWorker } from '../../workers/workerHandler'
+import ShopModel from '../shop/shop.model'
+import { getTotals } from './service.utils'
 
 const createService = async (
   loggedUser: JwtPayload,
@@ -22,6 +23,11 @@ const createService = async (
   if (loggedUser.role === ENUM_USER_ROLE.SELLER) {
     const standardizedServiceName = servicePayload.name.toLowerCase()
 
+    // check if the seller has shop or not
+    const shop = await ShopModel.findOne({ seller: loggedUser.userId })
+
+    console.log('shop', shop)
+    console.log('logged user', loggedUser)
     // Check if a service with a case-insensitive name already exists
     const existingService = await ServiceModel.findOne({
       name: { $regex: new RegExp('^' + standardizedServiceName + '$', 'i') },
@@ -36,6 +42,7 @@ const createService = async (
 
     const createdService = await ServiceModel.create({
       ...servicePayload,
+      shop: shop?._id,
       seller: loggedUser.userId,
     })
     return createdService
@@ -129,25 +136,32 @@ const getAllServices = async (
 
   const queriesWithFilterableFields = queryFieldsManipulation(
     searchTerm,
-    ['name', 'category', 'subCategory'],
+    ['name', 'category', 'subCategory', 'status'],
     filterableFields,
   )
 
-  if (queriesWithFilterableFields.length) {
+  if (queriesWithFilterableFields.length > 0) {
     queryPayload.$and = queriesWithFilterableFields
   }
 
+  console.log('filterOptions', filterOptions)
+
   const services = await ServiceModel.find(queryPayload)
+    .populate('shop', 'shopName')
     .sort(sortCondition)
     .skip(skip)
     .limit(limit)
 
-  const total: any = await createWorker()
+  const { total, totalApproved, totalPending, totalRejected } =
+    await getTotals(loggedUser)
   return {
     meta: {
       page,
       limit,
       total,
+      totalApproved,
+      totalPending,
+      totalRejected,
     },
     data: services,
   }

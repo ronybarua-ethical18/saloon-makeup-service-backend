@@ -15,6 +15,7 @@ const createService = tryCatchAsync(async (req: Request, res: Response) => {
     userId: mongoose.Types.ObjectId
     role: string
   }
+
   const result = await SaloonService.createService(loggedUser, req.body)
 
   sendResponse<IService>(res, {
@@ -32,6 +33,7 @@ const getAllServices = tryCatchAsync(async (req: Request, res: Response) => {
   }
   const filterOptions = pick(req.query, filterableFields)
   const queryOptions = pick(req.query, paginationFields)
+
   const result = await SaloonService.getAllServices(
     loggedUser,
     queryOptions,

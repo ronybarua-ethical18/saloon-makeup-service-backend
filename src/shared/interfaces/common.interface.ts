@@ -12,6 +12,9 @@ export type IGenericResponse<T> = {
     page: number
     limit: number
     total: number
+    totalApproved?: number
+    totalPending?: number
+    totalRejected?: number
   }
   data: T
 }
@@ -28,6 +31,7 @@ export interface IFilterOptions {
   name?: string
   category?: string
   subCategory?: string
+  status?: string
 }
 
 export interface IShopFilterOptions {

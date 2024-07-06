@@ -9,7 +9,7 @@ export enum SUB_CATEGORIES {
   DELUXE_BEARD_TRIM = 'Deluxe Beard Trim',
   HAIRCUT_DELUXE = 'Haircut Deluxe',
   NECK_SHAVE = 'Neck Shave',
-  SHAVE_AND_FACIAL = 'Shave-Facial',
+  SHAVE_AND_FACIAL = 'Shave & Facial',
   FACIAL_MAKEUP = 'Facial Makeup',
   EYE_MAKEUP = 'Eye Makeup',
   HAIR_MAKEUP = 'Hair Makeup',

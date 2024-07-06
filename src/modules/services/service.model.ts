@@ -43,6 +43,12 @@ const serviceSchema = new mongoose.Schema<IServiceDocument, IServiceModel>(
   },
 )
 
+// Create indexes
+serviceSchema.index({ name: 1 })
+serviceSchema.index({ category: 1 })
+serviceSchema.index({ subCategory: 1 })
+serviceSchema.index({ status: 1 })
+
 // Custom method example in the IServiceModel interface
 serviceSchema.statics.findByName = async function (
   name: string,
