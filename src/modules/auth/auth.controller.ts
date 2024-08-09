@@ -63,6 +63,7 @@ const loginUser = tryCatchAsync(async (req: Request, res: Response) => {
   }
 
   res.cookie('refreshToken', refreshToken, cookieOptions)
+  res.cookie('accessToken', result.accessToken, cookieOptions)
 
   sendResponse<ILoginUserResponse>(res, {
     statusCode: 200,

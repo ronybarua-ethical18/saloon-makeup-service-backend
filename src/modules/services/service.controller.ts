@@ -70,6 +70,19 @@ const getAllServices = tryCatchAsync(async (req: Request, res: Response) => {
     data: result.data,
   })
 })
+const getTopServices = tryCatchAsync(async (req: Request, res: Response) => {
+  const queryOptions = pick(req.query, paginationFields)
+
+  const result = await SaloonService.getTopServices(queryOptions)
+
+  sendResponse<IService[]>(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Top services fetched successfully',
+    meta: result.meta,
+    data: result.data,
+  })
+})
 
 const getService = tryCatchAsync(async (req: Request, res: Response) => {
   if (typeof req.params.serviceId === 'string') {
@@ -163,4 +176,5 @@ export const SaloonServiceController = {
   updateService,
   deleteService,
   updateManyServices,
+  getTopServices,
 }

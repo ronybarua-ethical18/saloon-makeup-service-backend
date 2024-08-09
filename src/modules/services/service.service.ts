@@ -5,7 +5,7 @@ import { IService } from './service.interface'
 import { ServiceModel } from './service.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-import mongoose, { SortOrder } from 'mongoose'
+import mongoose, { SortOrder, Types } from 'mongoose'
 import { paginationHelpers } from '../../helpers/pagination'
 import {
   IFilterOptions,
@@ -54,7 +54,9 @@ const createService = async (
 const getService = async (
   serviceId: mongoose.Types.ObjectId,
 ): Promise<IService> => {
-  const service = await ServiceModel.findById({ _id: serviceId })
+  const service = await ServiceModel.findById({ _id: serviceId }).populate(
+    'shop',
+  )
 
   if (!service) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Service not found')
@@ -152,8 +154,12 @@ const getAllServices = async (
     .skip(skip)
     .limit(limit)
 
-  const { total, totalApproved, totalPending, totalRejected } =
-    await getTotals(loggedUser)
+  const { total, totalApproved, totalPending, totalRejected } = await getTotals(
+    loggedUser?.role === ENUM_USER_ROLE.SELLER
+      ? { seller: new Types.ObjectId(loggedUser.userId) }
+      : {},
+  )
+
   return {
     meta: {
       page,
@@ -166,6 +172,25 @@ const getAllServices = async (
     data: services,
   }
 }
+const getTopServices = async (
+  queryOptions: IPaginationOptions,
+): Promise<IGenericResponse<IService[]>> => {
+  const { page, limit } = paginationHelpers.calculatePagination(queryOptions)
+  const services = await ServiceModel.find()
+    .populate('shop', 'shopName')
+    .limit(limit)
+
+  const { total } = await getTotals({})
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: services,
+  }
+}
 
 export const SaloonService = {
   createService,
@@ -173,4 +198,5 @@ export const SaloonService = {
   updateService,
   deleteService,
   getAllServices,
+  getTopServices,
 }

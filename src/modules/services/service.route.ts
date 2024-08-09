@@ -24,10 +24,11 @@ router.get(
   auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   SaloonServiceController.getAllServices,
 )
+router.get('/top', SaloonServiceController.getTopServices)
 
 router.get(
   '/:serviceId',
-  auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
+  // auth(ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
   SaloonServiceController.getService,
 )
 

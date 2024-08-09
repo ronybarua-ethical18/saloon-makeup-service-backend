@@ -1,12 +1,11 @@
 import { JwtPayload } from 'jsonwebtoken'
 import { ServiceStatusList } from './service.interface'
 import { ServiceModel } from './service.model'
-import { Types } from 'mongoose'
 
-export const getTotals = async (loggedUser: JwtPayload) => {
+export const getTotals = async (queryPayload: JwtPayload) => {
   // 1. Perform aggregation to get counts for each status
   const stats = await ServiceModel.aggregate([
-    { $match: { seller: new Types.ObjectId(loggedUser.userId) } },
+    { $match: queryPayload },
     {
       $group: {
         _id: '$status',

@@ -20,6 +20,11 @@ const UserSchema = new Schema<IUser, IUserModel>(
       type: String,
       unique: true,
     },
+    phone: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     password: {
       type: String,
       required: true,
