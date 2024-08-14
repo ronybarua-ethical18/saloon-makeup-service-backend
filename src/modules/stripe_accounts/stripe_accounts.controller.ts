@@ -38,13 +38,13 @@ const stripeConnectWebhook = tryCatchAsync(
         const secret = webhookSecret
 
         const header = stripe.webhooks.generateTestHeaderString({
-          payload: req.rawBody,
+          payload: req.rawBody as string,
           secret,
         })
 
         try {
           event = stripe?.webhooks.constructEvent(
-            req.rawBody,
+            req.rawBody as string,
             header,
             webhookSecret,
           )
