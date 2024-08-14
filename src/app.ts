@@ -11,8 +11,20 @@ const app: Application = express()
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
 
+declare module 'http' {
+  interface IncomingMessage {
+    rawBody?: string
+  }
+}
+
 //parser
-app.use(express.json())
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString()
+    },
+  }),
+)
 app.use(express.urlencoded({ extended: true }))
 
 //cookie parser

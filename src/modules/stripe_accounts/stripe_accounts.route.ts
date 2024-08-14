@@ -1,21 +1,24 @@
-// import express from 'express'
-// import auth from '../../middlewares/auth'
-// import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
-// import { FeedbackController } from './stripe_accounts.controller'
-// import validateRequest from '../../middlewares/validateRequest'
-// import { FeedbackValidation } from './stripe_accounts.validation'
-// const router = express.Router()
+import express from 'express'
+import auth from '../../middlewares/auth'
+import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
+import { StripeAccountController } from './stripe_accounts.controller'
+const router = express.Router()
 
-// router.post(
-//   '/',
-//   auth(ENUM_USER_ROLE.CUSTOMER),
-//   validateRequest(FeedbackValidation.createFeedbackZodSchema),
-//   FeedbackController.createFeedback,
-// )
-// router.get(
-//   '/',
-//   auth(ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN),
-//   FeedbackController.getAllFeedbacks,
-// )
+router.post(
+  '/connect',
+  auth(ENUM_USER_ROLE.SELLER),
+  StripeAccountController.createAndConnectStripeAccount,
+)
+router.get('/account-details', StripeAccountController.getStripeAccountDetails)
+router.get(
+  '/owner-account-details',
+  StripeAccountController.getOwnStripeAccountDetails,
+)
+router.post('/charge', StripeAccountController.createTestChargeToStripeAccount)
+router.post(
+  '/transfer-amount',
+  StripeAccountController.transferAmountToConnectedStripeAccount,
+)
+router.post('/connect/webhook', StripeAccountController.stripeConnectWebhook)
 
-// export const FeedbackRoutes = router
+export const StripeAccountRoutes = router

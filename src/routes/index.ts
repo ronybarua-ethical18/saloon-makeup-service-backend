@@ -8,6 +8,7 @@ import { FeedbackRoutes } from '../modules/feedbacks/feedback.route'
 import { FAQRoutes } from '../modules/faq/faq.route'
 import { BlogRoutes } from '../modules/blogs/blog.route'
 import { uploadRoute } from '../modules/upload/upload.route'
+import { StripeAccountRoutes } from '../modules/stripe_accounts/stripe_accounts.route'
 
 const router = express.Router()
 
@@ -52,6 +53,10 @@ const routeList: IRoute[] = [
   {
     path: '/uploads',
     route: uploadRoute,
+  },
+  {
+    path: '/stripe',
+    route: StripeAccountRoutes,
   },
 ]
 
