@@ -13,7 +13,7 @@ app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
 
 declare module 'http' {
   interface IncomingMessage {
-    rawBody?: string
+    rawBody?: string | object | unknown
   }
 }
 
