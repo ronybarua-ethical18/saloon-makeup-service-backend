@@ -5,6 +5,7 @@ import { UserModel } from '../user/user.model'
 import ApiError from '../../errors/ApiError'
 import httpStatus from 'http-status'
 import { stripe } from '../../config/stripe'
+import { manipulateLineItem } from '../../utils/stripe.utils'
 
 const createAndConnectStripeAccount = async (
   LoggedUser: JwtPayload,
@@ -82,7 +83,8 @@ const createTestChargeToStripeAccount = async (amount: number = 5000) => {
     const charge = await stripe.charges.create({
       amount: amount, // Amount in cents (e.g., 5000 cents = $50.00)
       currency: 'eur',
-      source: 'tok_visa', // Use 'tok_visa' for a successful charge in test mode
+      // source: 'tok_visa', // Use 'tok_visa' for a successful charge in test mode
+      source: 'tok_bypassPending',
       description: 'Adding funds to available balance for testing',
     })
 
@@ -102,9 +104,9 @@ const transferAmountToConnectedStripeAccount = async (
     // Create a transfer to the connected account
     const transfer = await stripe.transfers.create({
       amount: amount, // amount in the smallest currency unit (e.g., cents for USD)
-      currency: 'usd', // currency of the transfer
+      currency: 'eur', // currency of the transfer
       destination: destinationAccountId, // connected account ID
-      transfer_group: 'ORDER_95', // optional transfer group for better tracking
+      // transfer_group: 'ORDER_95', // optional transfer group for better tracking
     })
 
     // Retrieve the transfer details
@@ -136,10 +138,50 @@ const getOwnStripeAccountDetails = async () => {
   }
 }
 
+const stripePaymentCheckout = async () => {
+  const stripeFee = (45 * 2.9) / 100 + 0.3
+  // const loggedUser: any = req.user
+
+  const customer = await stripe.customers.create({
+    metadata: {
+      // userId: loggedUser._id.toString(),
+      processing_fees: stripeFee,
+      // storeId: loggedUser.storeId.toString(),
+    },
+  })
+
+  console.log('stripe customer', customer)
+
+  // Make sure manipulateLineItem() returns a non-empty array
+  const lineItems = manipulateLineItem()
+
+  if (!lineItems || lineItems?.length === 0) {
+    throw new Error('Line items are required for Stripe checkout')
+  }
+
+  const stripeSessionPayload: Stripe.Checkout.SessionCreateParams = {
+    mode: 'payment',
+    payment_method_types: ['card'],
+
+    line_items: manipulateLineItem(),
+    customer: customer.id,
+    phone_number_collection: {
+      enabled: true,
+    },
+    success_url: config.stripe.stripe_payment_success_url,
+    cancel_url: config.stripe.stripe_payment_failed_url,
+  }
+
+  const session = await stripe?.checkout?.sessions.create(stripeSessionPayload)
+
+  return session.url
+}
+
 export const StripeAccountService = {
   createAndConnectStripeAccount,
   getStripeAccountDetails,
   transferAmountToConnectedStripeAccount,
   createTestChargeToStripeAccount,
   getOwnStripeAccountDetails,
+  stripePaymentCheckout,
 }

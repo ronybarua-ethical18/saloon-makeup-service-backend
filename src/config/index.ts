@@ -38,5 +38,7 @@ export default {
   stripe: {
     stripe_secret_key: process.env.STRIPE_SECRET_KEY,
     stripe_webhook_secret_key: process.env.STRIPE_WEBHOOK_SECRET,
+    stripe_payment_success_url: process.env.STRIPE_PAYMENT_SUCCESS_URL,
+    stripe_payment_failed_url: process.env.STRIPE_PAYMENT_FAILED_URL,
   },
 }

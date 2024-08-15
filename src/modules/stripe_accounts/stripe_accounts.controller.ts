@@ -95,6 +95,18 @@ const createTestChargeToStripeAccount = tryCatchAsync(
     })
   },
 )
+const stripePaymentCheckout = tryCatchAsync(
+  async (req: Request, res: Response) => {
+    const result = await StripeAccountService.stripePaymentCheckout()
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payment checkout page is generated',
+      data: result,
+    })
+  },
+)
 const getOwnStripeAccountDetails = tryCatchAsync(
   async (req: Request, res: Response) => {
     const result = await StripeAccountService.getOwnStripeAccountDetails()
@@ -113,7 +125,7 @@ const transferAmountToConnectedStripeAccount = tryCatchAsync(
     const result =
       await StripeAccountService.transferAmountToConnectedStripeAccount(
         'acct_1PnjlHPXU6uylqvz',
-        1000,
+        500,
       )
 
     sendResponse(res, {
@@ -132,4 +144,5 @@ export const StripeAccountController = {
   transferAmountToConnectedStripeAccount,
   createTestChargeToStripeAccount,
   getOwnStripeAccountDetails,
+  stripePaymentCheckout,
 }

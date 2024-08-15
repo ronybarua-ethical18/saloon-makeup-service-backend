@@ -15,6 +15,7 @@ router.get(
   StripeAccountController.getOwnStripeAccountDetails,
 )
 router.post('/charge', StripeAccountController.createTestChargeToStripeAccount)
+router.post('/payment-checkout', StripeAccountController.stripePaymentCheckout)
 router.post(
   '/transfer-amount',
   StripeAccountController.transferAmountToConnectedStripeAccount,
