@@ -177,7 +177,7 @@ const getTopServices = async (
 ): Promise<IGenericResponse<IService[]>> => {
   const { page, limit } = paginationHelpers.calculatePagination(queryOptions)
   const services = await ServiceModel.find()
-    .populate('shop', 'shopName')
+    .populate('shop', 'shopName serviceTime')
     .limit(limit)
 
   const { total } = await getTotals({})
