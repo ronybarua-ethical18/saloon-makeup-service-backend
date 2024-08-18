@@ -9,6 +9,7 @@ import { FAQRoutes } from '../modules/faq/faq.route'
 import { BlogRoutes } from '../modules/blogs/blog.route'
 import { uploadRoute } from '../modules/upload/upload.route'
 import { StripeAccountRoutes } from '../modules/stripe_accounts/stripe_accounts.route'
+import { ShopTimeSlotRoutes } from '../modules/shop_timeslots/shop_timeslots.route'
 
 const router = express.Router()
 
@@ -57,6 +58,10 @@ const routeList: IRoute[] = [
   {
     path: '/stripe',
     route: StripeAccountRoutes,
+  },
+  {
+    path: '/shop-timeslots',
+    route: ShopTimeSlotRoutes,
   },
 ]
 
