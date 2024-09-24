@@ -18,6 +18,7 @@ const createShop = async (
   loggedUser: JwtPayload,
   shopPayload: IShopDocument,
 ): Promise<IShopDocument> => {
+  console.log('shop payload', shopPayload)
   if (loggedUser.role === ENUM_USER_ROLE.SELLER) {
     const shop = await ShopModel.findOneAndUpdate(
       { seller: loggedUser.userId },
@@ -46,6 +47,7 @@ const updateShop = async (
   shopId: mongoose.Types.ObjectId,
   updatePayload: object,
 ): Promise<IShopDocument | null> => {
+  console.log('update payload from shop', updatePayload)
   const queryPayload = {
     _id: shopId,
   } as {

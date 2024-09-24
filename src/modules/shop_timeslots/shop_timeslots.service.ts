@@ -65,7 +65,7 @@ const createShopTimeSlots = async (
       const generatedTimeSlots = generateTimeSlots(
         shopOpenHour,
         shopClosingHour,
-        5,
+        shop?.maxResourcePerHour || 5,
       )
 
       await ShopTimeSlotsModel.create({

@@ -25,6 +25,12 @@ const UserSchema = new Schema<IUser, IUserModel>(
       required: true,
       unique: true,
     },
+    address: {
+      type: String,
+    },
+    bio: {
+      type: String,
+    },
     password: {
       type: String,
       required: true,
@@ -33,6 +39,9 @@ const UserSchema = new Schema<IUser, IUserModel>(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    img: {
+      type: String,
     },
   },
   {

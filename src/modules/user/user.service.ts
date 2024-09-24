@@ -4,12 +4,27 @@ import mongoose from 'mongoose'
 import { IUser } from './user.interface'
 import ApiError from '../../errors/ApiError'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
+import ShopModel from '../shop/shop.model'
+import { IShopDocument } from '../shop/shop.interface'
 
-const getUser = async (userId: mongoose.Types.ObjectId): Promise<IUser> => {
+const getUser = async (
+  userId: mongoose.Types.ObjectId,
+): Promise<IUser | (IUser & { shop: IShopDocument })> => {
   const user = await UserModel.findById({ _id: userId })
+    .lean()
+    .select('-password')
 
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  if (user.role === ENUM_USER_ROLE.SELLER) {
+    const shop = await ShopModel.findOne({ seller: user._id })
+
+    if (shop) {
+      return { ...user, shop }
+    }
+    return user
   }
 
   return user
@@ -18,16 +33,16 @@ const updateUser = async (
   userId: mongoose.Types.ObjectId,
   updatePayload: object,
 ): Promise<IUser | null> => {
-  const user = await UserModel.findById({ _id: userId })
+  const updatedUser = await UserModel.findByIdAndUpdate(userId, updatePayload, {
+    new: true,
+    runValidators: true,
+  })
 
-  if (!user) {
+  if (!updatedUser) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
   }
-  const updatedUser = await UserModel.findByIdAndUpdate(
-    { _id: user._id },
-    { ...updatePayload },
-    { new: true },
-  )
+
+  console.log('updated user', updatedUser)
 
   return updatedUser
 }

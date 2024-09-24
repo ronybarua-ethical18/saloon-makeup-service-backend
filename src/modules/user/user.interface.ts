@@ -7,8 +7,11 @@ export type IUser = {
   email: string
   phone: string
   role: string
+  address: string
   password?: string
   isVerified?: boolean
+  img?: string
+  bio?: string
 }
 
 export interface IUserModel extends Model<IUser> {

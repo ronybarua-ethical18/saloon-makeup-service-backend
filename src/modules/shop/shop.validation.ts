@@ -31,7 +31,16 @@ const createShopZodSchema = z.object({
     stylists: z.array(StylistSchema).optional(),
     appointments: z.array(AppointmentSchema).optional(),
     openingHours: z.array(OpeningHoursSchema).optional(),
-    gallery: z.array(z.string()).optional(),
+    maxResourcePerHour: z.number({
+      required_error: 'Max resource per hour is required',
+    }),
+    gallery: z
+      .array(
+        z.object({
+          img: z.string(), // Ensures `img` is of type `string`
+        }),
+      )
+      .optional(),
   }),
 })
 
