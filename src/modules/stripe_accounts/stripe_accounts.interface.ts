@@ -1,27 +1,35 @@
-import mongoose, { Document } from 'mongoose'
+import { Document, Types } from 'mongoose'
 
 export enum UserType {
-  SELLER = 'SELLER',
-  PORTAL_OWNER = 'PORTAL_OWNER',
+  SELLER = 'seller',
+  BUYER = 'buyer',
+  // Add other user types if needed
 }
 
 export enum AccountType {
-  EXPRESS = 'EXPRESS',
-  STANDARD = 'STANDARD',
-  CUSTOM = 'CUSTOM',
+  EXPRESS = 'express',
+  STANDARD = 'standard',
+  CUSTOM = 'custom',
 }
 
 export enum StripeAccountStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  // Add other statuses if needed
 }
 
 // Interface for the stripe account document
 export interface IStripeAccount extends Document {
-  user: mongoose.Types.ObjectId
+  user: Types.ObjectId
   userType: UserType
   stripeAccountId: string
   accountType: AccountType
-  status: StripeAccountStatus
   balance: number
+  status: StripeAccountStatus
+  // New fields
+  country?: string
+  defaultCurrency?: string
+  detailsSubmitted?: boolean
+  chargesEnabled?: boolean
+  payoutsEnabled?: boolean
 }

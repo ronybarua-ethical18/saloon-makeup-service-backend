@@ -9,9 +9,12 @@ router.post(
   auth(ENUM_USER_ROLE.SELLER),
   StripeAccountController.createAndConnectStripeAccount,
 )
-router.get('/account-details', StripeAccountController.getStripeAccountDetails)
 router.get(
-  '/owner-account-details',
+  '/account-details/:accountId',
+  StripeAccountController.getStripeAccountDetails,
+)
+router.get(
+  '/owner-account-details/:accountId',
   StripeAccountController.getOwnStripeAccountDetails,
 )
 router.post('/charge', StripeAccountController.createTestChargeToStripeAccount)
@@ -21,5 +24,10 @@ router.post(
   StripeAccountController.transferAmountToConnectedStripeAccount,
 )
 router.post('/connect/webhook', StripeAccountController.stripeConnectWebhook)
+router.get(
+  '/details/:accountId',
+  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
+  StripeAccountController.getStripeAccountDetails,
+)
 
 export const StripeAccountRoutes = router

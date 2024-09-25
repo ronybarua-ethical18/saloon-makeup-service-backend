@@ -1,9 +1,9 @@
 import mongoose, { Schema } from 'mongoose'
 import {
-  AccountType,
   IStripeAccount,
-  StripeAccountStatus,
   UserType,
+  AccountType,
+  StripeAccountStatus,
 } from './stripe_accounts.interface'
 
 // Create the Mongoose Schema
@@ -38,6 +38,12 @@ const StripeAccountSchema = new mongoose.Schema<IStripeAccount>(
       enum: Object.values(StripeAccountStatus),
       default: StripeAccountStatus.INACTIVE,
     },
+    // New fields
+    country: String,
+    defaultCurrency: String,
+    detailsSubmitted: Boolean,
+    chargesEnabled: Boolean,
+    payoutsEnabled: Boolean,
   },
   {
     timestamps: true,

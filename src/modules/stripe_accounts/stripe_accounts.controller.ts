@@ -6,6 +6,8 @@ import mongoose from 'mongoose'
 import config from '../../config'
 import { stripe } from '../../config/stripe'
 import Stripe from 'stripe'
+import ApiError from '../../errors/ApiError'
+import httpStatus from 'http-status'
 
 const createAndConnectStripeAccount = tryCatchAsync(
   async (req: Request, res: Response) => {
@@ -58,26 +60,40 @@ const stripeConnectWebhook = tryCatchAsync(
         const eventType = event.type as string
 
         if (eventType === 'account.updated') {
-          console.log('webhook data', data)
+          console.log('Stripe Connect account updated:', data)
+          try {
+            await StripeAccountService.saveOrUpdateStripeAccount(data)
+          } catch (error) {
+            console.error('Error saving/updating Stripe account:', error)
+            // You might want to handle this error, perhaps by creating a task to reconcile this account later
+          }
         }
+
+        res.status(200).end()
       } else {
         return null
       }
-      res.status(200).end()
     } catch (error) {
       console.log('webhook error', error)
+      res.status(400).end()
     }
   },
 )
 
 const getStripeAccountDetails = tryCatchAsync(
   async (req: Request, res: Response) => {
-    const result = await StripeAccountService.getStripeAccountDetails()
+    const { accountId } = req.params // Assuming accountId is passed as a route parameter
+
+    if (!accountId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Account ID is required')
+    }
+
+    const result = await StripeAccountService.getStripeAccountDetails(accountId)
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: 'Stripe account details is retrieved successfully',
+      message: 'Stripe account details retrieved successfully',
       data: result,
     })
   },
@@ -124,7 +140,7 @@ const transferAmountToConnectedStripeAccount = tryCatchAsync(
   async (req: Request, res: Response) => {
     const result =
       await StripeAccountService.transferAmountToConnectedStripeAccount(
-        'acct_1PnjlHPXU6uylqvz',
+        'acct_1Q2ovyPiAo8lWa75',
         500,
       )
 
