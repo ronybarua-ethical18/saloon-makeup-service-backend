@@ -12,6 +12,7 @@ import {
   AccountType,
   StripeAccountStatus,
 } from './stripe_accounts.interface'
+import mongoose from 'mongoose'
 
 const createAndConnectStripeAccount = async (
   LoggedUser: JwtPayload,
@@ -40,7 +41,7 @@ const createAndConnectStripeAccount = async (
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url: 'http://localhost:3000/reauth',
-      return_url: `${config.client_port}/seller/settings?success`,
+      return_url: `${config.client_port}/seller/settings?success=true`,
       type: 'account_onboarding',
     })
 
@@ -51,6 +52,92 @@ const createAndConnectStripeAccount = async (
       httpStatus.BAD_REQUEST,
       'You are not allowed to perform the operation',
     )
+  }
+}
+
+// Create a Payment Intent with 'manual' capture to hold funds and include application fee for platform owner
+const createPaymentIntentForHold = async ({
+  amount,
+  currency,
+  seller,
+}: {
+  amount: number
+  currency: string
+  seller: mongoose.Types.ObjectId
+}) => {
+  try {
+    const sellerAccount = await StripeAccountModel.findOne({
+      user: seller,
+      userType: UserType.SELLER,
+    })
+
+    if (!sellerAccount) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        'No stripe account found for the service seller',
+      )
+    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Amount in the smallest currency unit (e.g., cents for EUR)
+      currency: currency,
+      capture_method: 'manual', // Hold the funds, manual capture required later
+      payment_method_types: ['card'], // Specify payment method type
+      description: 'Payment for service on hold',
+
+      // Application fee for platform owner (10% of total amount)
+      application_fee_amount: Math.floor(amount * 100 * 0.1), // Platform owner gets 10%
+
+      // Transfer the remaining 90% to the seller's Stripe connected account
+      transfer_data: {
+        destination: sellerAccount.stripeAccountId, // Seller's connected Stripe account
+      },
+    })
+
+    console.log('Payment Intent Created with manual capture:', paymentIntent)
+    return { client_secret: paymentIntent.client_secret }
+  } catch (error) {
+    console.error('Failed to create Payment Intent with manual capture:', error)
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Payment Intent creation failed',
+    )
+  }
+}
+
+const captureHeldPayment = async (paymentIntentId: string) => {
+  try {
+    // First, retrieve the PaymentIntent to check its status
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+
+    if (paymentIntent.status === 'requires_capture') {
+      // If the status is 'requires_capture', we can proceed with capturing
+      const capturedPaymentIntent =
+        await stripe.paymentIntents.capture(paymentIntentId)
+      console.log('Payment Captured:', capturedPaymentIntent)
+      return capturedPaymentIntent
+    } else if (paymentIntent.status === 'requires_payment_method') {
+      // If the status is 'requires_payment_method', we need to inform the user
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        'Payment method is required. The payment has not been processed yet.',
+      )
+    } else {
+      // For any other status, throw an error with the current status
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Cannot capture payment. Current status: ${paymentIntent.status}`,
+      )
+    }
+  } catch (error) {
+    console.error('Failed to capture the payment:', error)
+    if (error instanceof ApiError) {
+      throw error
+    } else {
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Payment capture failed',
+      )
+    }
   }
 }
 
@@ -232,6 +319,8 @@ const saveOrUpdateStripeAccount = async (accountData: Stripe.Account) => {
 
 export const StripeAccountService = {
   createAndConnectStripeAccount,
+  createPaymentIntentForHold,
+  captureHeldPayment,
   getStripeAccountDetails,
   createTestChargeToStripeAccount,
   transferAmountToConnectedStripeAccount,

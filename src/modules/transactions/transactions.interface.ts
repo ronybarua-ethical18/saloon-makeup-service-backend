@@ -26,7 +26,7 @@ export interface ITransactions extends Document {
   booking: Schema.Types.ObjectId
   amount: number
   status: AmountStatus
-  stripePaymentId: string
+  stripePaymentIntentId: string
   paymentMethod: PaymentMethod
   sellerAmount: number
   portalAmount: number

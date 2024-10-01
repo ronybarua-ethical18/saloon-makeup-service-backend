@@ -9,6 +9,16 @@ router.post(
   auth(ENUM_USER_ROLE.SELLER),
   StripeAccountController.createAndConnectStripeAccount,
 )
+router.post(
+  '/payment-intent',
+  auth(ENUM_USER_ROLE.CUSTOMER),
+  StripeAccountController.createPaymentIntentForHold,
+)
+router.post(
+  '/capture-payment',
+  auth(ENUM_USER_ROLE.CUSTOMER, ENUM_USER_ROLE.SELLER, ENUM_USER_ROLE.ADMIN),
+  StripeAccountController.captureHeldPayment,
+)
 router.get(
   '/account-details/:accountId',
   StripeAccountController.getStripeAccountDetails,

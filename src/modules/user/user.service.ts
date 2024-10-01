@@ -6,6 +6,10 @@ import ApiError from '../../errors/ApiError'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
 import ShopModel from '../shop/shop.model'
 import { IShopDocument } from '../shop/shop.interface'
+import StripeAccountModel from '../stripe_accounts/stripe_accounts.model'
+import { StripeAccountService } from '../stripe_accounts/stripe_accounts.service'
+import Stripe from 'stripe'
+import { IStripeAccountDetails } from '../stripe_accounts/stripe_accounts.interface'
 
 const getUser = async (
   userId: mongoose.Types.ObjectId,
@@ -18,17 +22,52 @@ const getUser = async (
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
   }
 
-  if (user.role === ENUM_USER_ROLE.SELLER) {
-    const shop = await ShopModel.findOne({ seller: user._id })
-
-    if (shop) {
-      return { ...user, shop }
+  const responsePayload: Partial<
+    IUser & {
+      shop?: IShopDocument
+      stripeAccountDetails?: IStripeAccountDetails
     }
-    return user
+  > = {
+    ...user,
   }
 
-  return user
+  if (user.role === ENUM_USER_ROLE.SELLER) {
+    const shop = await ShopModel.findOne({ seller: user._id })
+    const stripeAccount = await StripeAccountModel.findOne({ user: user._id })
+
+    if (stripeAccount) {
+      const result = await StripeAccountService.getStripeAccountDetails(
+        stripeAccount.stripeAccountId,
+      )
+      const stripeAccountDetails = {
+        country: result?.accountDetails?.country,
+        currency: result?.accountDetails?.default_currency,
+        stripeAccountId: result?.accountDetails?.id,
+        bankName:
+          result?.accountDetails?.external_accounts?.data?.[0]?.object ===
+          'bank_account'
+            ? (
+                result.accountDetails.external_accounts
+                  .data[0] as Stripe.BankAccount
+              ).bank_name
+            : null,
+        balance: result?.balanceDetails?.available?.[0]?.amount,
+      } as IStripeAccountDetails
+
+      responsePayload.stripeAccountDetails = stripeAccountDetails
+    }
+
+    if (shop) {
+      responsePayload.shop = shop
+    }
+  }
+
+  return responsePayload as IUser & {
+    shop?: IShopDocument
+    stripeAccountDetails?: IStripeAccountDetails
+  }
 }
+
 const updateUser = async (
   userId: mongoose.Types.ObjectId,
   updatePayload: object,

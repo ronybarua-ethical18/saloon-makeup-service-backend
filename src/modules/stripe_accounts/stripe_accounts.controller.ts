@@ -26,6 +26,33 @@ const createAndConnectStripeAccount = tryCatchAsync(
     })
   },
 )
+const createPaymentIntentForHold = tryCatchAsync(
+  async (req: Request, res: Response) => {
+    const result: { client_secret: string | null } =
+      await StripeAccountService.createPaymentIntentForHold(req.body)
+
+    sendResponse<unknown>(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payment intent is created successfully',
+      data: result,
+    })
+  },
+)
+
+const captureHeldPayment = tryCatchAsync(
+  async (req: Request, res: Response) => {
+    const result: Stripe.PaymentIntent =
+      await StripeAccountService.captureHeldPayment(req.body?.paymentIntentId)
+
+    sendResponse<Stripe.PaymentIntent>(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payment captured successfully',
+      data: result,
+    })
+  },
+)
 
 const stripeConnectWebhook = tryCatchAsync(
   async (req: Request, res: Response) => {
@@ -140,8 +167,8 @@ const transferAmountToConnectedStripeAccount = tryCatchAsync(
   async (req: Request, res: Response) => {
     const result =
       await StripeAccountService.transferAmountToConnectedStripeAccount(
-        'acct_1Q2ovyPiAo8lWa75',
-        500,
+        'acct_1Q3A4yBH0X57e8kd',
+        575,
       )
 
     sendResponse(res, {
@@ -153,12 +180,30 @@ const transferAmountToConnectedStripeAccount = tryCatchAsync(
   },
 )
 
+const capturePayment = async (req: Request, res: Response) => {
+  try {
+    const { paymentIntentId } = req.body
+    const capturedPayment =
+      await StripeAccountService.captureHeldPayment(paymentIntentId)
+    res.status(200).json(capturedPayment)
+  } catch (error) {
+    if (error instanceof ApiError) {
+      res.status(error.statusCode).json({ message: error.message })
+    } else {
+      res.status(500).json({ message: 'An unexpected error occurred' })
+    }
+  }
+}
+
 export const StripeAccountController = {
   createAndConnectStripeAccount,
+  createPaymentIntentForHold,
+  captureHeldPayment,
   stripeConnectWebhook,
   getStripeAccountDetails,
   transferAmountToConnectedStripeAccount,
   createTestChargeToStripeAccount,
   getOwnStripeAccountDetails,
   stripePaymentCheckout,
+  capturePayment,
 }

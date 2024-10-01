@@ -42,7 +42,7 @@ const TransactionsSchema = new mongoose.Schema<ITransactions>(
       enum: Object.values(AmountStatus),
       default: AmountStatus.PENDING,
     },
-    stripePaymentId: {
+    stripePaymentIntentId: {
       type: String,
       required: true,
     },

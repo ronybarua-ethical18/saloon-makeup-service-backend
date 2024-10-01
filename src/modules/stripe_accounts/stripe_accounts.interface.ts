@@ -18,6 +18,14 @@ export enum StripeAccountStatus {
   // Add other statuses if needed
 }
 
+export interface IStripeAccountDetails {
+  country: string
+  currency: string
+  stripeAccountId: string
+  bankName: string
+  balance: number
+}
+
 // Interface for the stripe account document
 export interface IStripeAccount extends Document {
   user: Types.ObjectId
