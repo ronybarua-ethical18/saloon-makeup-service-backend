@@ -93,8 +93,11 @@ const createPaymentIntentForHold = async ({
       },
     })
 
-    console.log('Payment Intent Created with manual capture:', paymentIntent)
-    return { client_secret: paymentIntent.client_secret }
+    console.log(
+      'Payment Intent Created with manual capture:',
+      paymentIntent?.id,
+    )
+    return { client_secret: paymentIntent.client_secret, id: paymentIntent.id }
   } catch (error) {
     console.error('Failed to create Payment Intent with manual capture:', error)
     throw new ApiError(
