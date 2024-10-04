@@ -9,6 +9,10 @@ const ShopTimeSlotsSchema = new mongoose.Schema<IShopTimeSlots>(
       ref: 'shop',
       required: true,
     },
+    slotFor: {
+      type: Date,
+      required: true,
+    },
     timeSlots: {
       type: [
         {
@@ -22,8 +26,6 @@ const ShopTimeSlotsSchema = new mongoose.Schema<IShopTimeSlots>(
     timestamps: true,
   },
 )
-
-ShopTimeSlotsSchema.index({ stripeAccountId: 1 }, { unique: true })
 
 // Create the Mongoose Model
 const ShopTimeSlotsModel = mongoose.model<IShopTimeSlots>(

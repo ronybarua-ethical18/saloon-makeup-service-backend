@@ -3,6 +3,7 @@ import mongoose, { Schema } from 'mongoose'
 import {
   AmountStatus,
   ITransactions,
+  PaymentMethod,
   TransactionType,
 } from './transactions.interface'
 
@@ -51,17 +52,22 @@ const TransactionsSchema = new mongoose.Schema<ITransactions>(
       enum: Object.values(TransactionType),
       required: true,
     },
+    paymentMethod: {
+      type: String,
+      enum: Object.values(PaymentMethod),
+      required: true,
+    },
     sellerAmount: {
       type: Number,
-      required: true,
+      default: 0,
     },
-    portalAmount: {
+    applicationFee: {
       type: Number,
-      required: true,
+      default: 0,
     },
-    completedAt: {
-      type: Date,
-      required: true,
+    isPaymentDisbursed: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -69,7 +75,7 @@ const TransactionsSchema = new mongoose.Schema<ITransactions>(
   },
 )
 
-TransactionsSchema.index({ stripeAccountId: 1 }, { unique: true })
+TransactionsSchema.index({ stripePaymentIntentId: 1 }, { unique: true })
 
 // Create the Mongoose Model
 const Transaction = mongoose.model<ITransactions>(

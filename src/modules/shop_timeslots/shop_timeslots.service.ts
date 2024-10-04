@@ -1,4 +1,3 @@
-import { JwtPayload } from 'jsonwebtoken'
 import { UserModel } from '../user/user.model'
 import ApiError from '../../errors/ApiError'
 import httpStatus from 'http-status'
@@ -10,31 +9,36 @@ import { generateTimeSlots } from './shop_timeslots.utils'
 import mongoose from 'mongoose'
 
 const createShopTimeSlots = async (
-  LoggedUser: JwtPayload,
   payload: {
     shop: mongoose.Types.ObjectId
+    seller: mongoose.Types.ObjectId
+    serviceDate: string
     startTime: string
   },
-): Promise<void> => {
+  session?: mongoose.ClientSession,
+): Promise<IShopTimeSlots | null> => {
   const seller = await UserModel.findOne({
-    _id: LoggedUser.userId,
+    _id: payload.seller,
     role: 'seller',
-  })
+  }).session(session || null)
 
-  const shop = await ShopModel.findOne({ _id: payload?.shop })
+  const shop = await ShopModel.findOne({ _id: payload?.shop }).session(
+    session || null,
+  )
 
   if (seller && shop) {
-    const todayStart = moment().startOf('day').toDate()
-    const todayEnd = moment().endOf('day').toDate()
+    const serviceDateStart = moment(payload.serviceDate).startOf('day').toDate()
+    const serviceDateEnd = moment(payload.serviceDate).endOf('day').toDate()
 
-    // Find time slots for the shop where createdAt is within today
+    // Find time slots for the shop where createdAt is within the service date
     const shopTimeSlot = await ShopTimeSlotsModel.findOne({
       shop: shop._id,
-      createdAt: {
-        $gte: todayStart,
-        $lte: todayEnd,
+      slotFor: {
+        $gte: serviceDateStart,
+        $lte: serviceDateEnd,
       },
-    })
+    }).session(session || null)
+
     if (shopTimeSlot) {
       const updatedTimeSlots = shopTimeSlot.timeSlots.map(
         (timeSlot: ITimeSlot) => {
@@ -51,27 +55,52 @@ const createShopTimeSlots = async (
         },
       )
 
-      await ShopTimeSlotsModel.findOneAndUpdate(
+      const updatedShopTimeSlot = await ShopTimeSlotsModel.findOneAndUpdate(
         { shop: shop._id, _id: shopTimeSlot._id },
         {
           timeSlots: updatedTimeSlots,
         },
-        { new: true },
+        { new: true, session },
       )
+
+      return updatedShopTimeSlot
     } else {
       const shopOpenHour = shop.serviceTime.openingHour
       const shopClosingHour = shop.serviceTime.closingHour
 
-      const generatedTimeSlots = generateTimeSlots(
+      // Generate the time slots
+      let generatedTimeSlots = generateTimeSlots(
         shopOpenHour,
         shopClosingHour,
         shop?.maxResourcePerHour || 5,
       )
 
-      await ShopTimeSlotsModel.create({
-        shop: shop._id,
-        timeSlots: generatedTimeSlots,
+      // Reduce maxResourcePerHour for the specified startTime
+      generatedTimeSlots = generatedTimeSlots.map(timeSlot => {
+        if (
+          timeSlot.startTime === payload.startTime &&
+          timeSlot.maxResourcePerHour > 0
+        ) {
+          return {
+            startTime: timeSlot.startTime,
+            maxResourcePerHour: timeSlot.maxResourcePerHour - 1,
+          }
+        }
+        return timeSlot
       })
+
+      const newShopTimeSlot = await ShopTimeSlotsModel.create(
+        [
+          {
+            shop: shop._id,
+            slotFor: new Date(payload.serviceDate),
+            timeSlots: generatedTimeSlots,
+          },
+        ],
+        { session },
+      )
+
+      return newShopTimeSlot[0]
     }
   } else {
     throw new ApiError(
@@ -80,6 +109,8 @@ const createShopTimeSlots = async (
     )
   }
 }
+
+export default createShopTimeSlots
 
 const getSingleShopTimeSlots = async (
   shopId: mongoose.Types.ObjectId,

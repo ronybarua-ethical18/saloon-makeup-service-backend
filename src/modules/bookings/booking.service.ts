@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status'
-import moment from 'moment'
+// import moment from 'moment'
 import ApiError from '../../errors/ApiError'
-import { IBooking } from './booking.interface'
+import { DayOfWeeks, IBooking } from './booking.interface'
 import BookingModel from './booking.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
@@ -13,92 +13,113 @@ import {
   IGenericResponse,
   IPaginationOptions,
 } from '../../shared/interfaces/common.interface'
-import {
-  areBothTimesInBetween,
-  bookingsAggregationPipeline,
-} from './booking.utils'
+import { bookingsAggregationPipeline } from './booking.utils'
 import ShopModel from '../shop/shop.model'
 import { IShopDocument } from '../shop/shop.interface'
+import { ShopTimeSlotsServices } from '../shop_timeslots/shop_timeslots.service'
+import moment from 'moment'
+import Transaction from '../transactions/transactions.model'
+import {
+  AmountStatus,
+  PaymentMethod,
+  TransactionType,
+} from '../transactions/transactions.interface'
+
+interface IBookingPayload {
+  serviceDate: string
+  serviceStartTime: string
+  processingFees: number
+  totalAmount: number
+  serviceId: string
+  sellerId: string
+  shop: any
+  stripePaymentIntentId: string
+  paymentMethod: PaymentMethod
+}
 
 const createBooking = async (
   loggedUser: JwtPayload,
-  bookingPayload: IBooking,
+  bookingPayload: IBookingPayload,
 ): Promise<any> => {
-  if (loggedUser.role === ENUM_USER_ROLE.CUSTOMER) {
-    const shop = (await ShopModel.findOne({
-      _id: bookingPayload.shop,
-    })) as IShopDocument
-
-    if (shop?.serviceTime.offDays.includes(bookingPayload.serviceDayOfWeek)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `The shop is closed on ${bookingPayload.serviceDayOfWeek}`,
-      )
-    }
-
-    if (
-      !areBothTimesInBetween(
-        bookingPayload.serviceStartTime,
-        bookingPayload.serviceEndTime,
-        shop?.serviceTime?.openingHour,
-        shop?.serviceTime?.closingHour,
-      )
-    ) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        'The shop does not offer any services during this time slot.',
-      )
-    }
-
-    const alreadyBookedServiceOnDay = await BookingModel.find({
-      serviceId: bookingPayload.serviceId,
-      seller: bookingPayload.seller,
-      shop: bookingPayload.shop,
-      serviceDayOfWeek: bookingPayload.serviceDayOfWeek,
-    })
-
-    const existingBookingSlots = alreadyBookedServiceOnDay?.map(booking => {
-      return {
-        serviceStartTime: booking.serviceStartTime,
-        serviceEndTime: booking.serviceEndTime,
-        serviceDayOfWeek: booking.serviceDayOfWeek,
-      }
-    })
-
-    for (const slot of existingBookingSlots) {
-      const existingBookingSlotStartTime = moment(
-        slot.serviceStartTime,
-        'HH:mm',
-      )
-      const existingBookingSlotEndTime = moment(slot.serviceEndTime, 'HH:mm')
-      const newBookingSlotStartTime = moment(
-        bookingPayload.serviceStartTime,
-        'HH:mm',
-      )
-      const newBookingSlotEndTime = moment(
-        bookingPayload.serviceEndTime,
-        'HH:mm',
-      )
-
-      if (
-        newBookingSlotStartTime <= existingBookingSlotEndTime &&
-        newBookingSlotEndTime >= existingBookingSlotStartTime
-      ) {
-        throw new ApiError(
-          httpStatus.CONFLICT,
-          'The service has already been booked for the requested time slot.',
-        )
-      }
-    }
-
-    const booking = await BookingModel.create({
-      ...bookingPayload,
-      customer: loggedUser.userId,
-    })
-
-    return booking
-  } else {
+  console.log('bookingPayload', bookingPayload)
+  if (loggedUser.role !== ENUM_USER_ROLE.CUSTOMER) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'You are not a customer')
+  }
+
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    const shop = (await ShopModel.findOne({
+      _id: bookingPayload.shop?._id,
+    }).session(session)) as IShopDocument
+
+    if (!shop) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found')
+    }
+
+    const dayOfWeek = moment(bookingPayload.serviceDate).format(
+      'dddd',
+    ) as DayOfWeeks
+
+    if (shop?.serviceTime.offDays.includes(dayOfWeek)) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `The shop is closed on ${dayOfWeek}`,
+      )
+    }
+
+    const shopTimeSlot = await ShopTimeSlotsServices.createShopTimeSlots(
+      {
+        shop: bookingPayload.shop,
+        seller: new mongoose.Types.ObjectId(bookingPayload.sellerId),
+        serviceDate: bookingPayload.serviceDate,
+        startTime: bookingPayload.serviceStartTime,
+      },
+      session,
+    )
+
+    const booking = await BookingModel.create(
+      [
+        {
+          customer: loggedUser.userId,
+          seller: new mongoose.Types.ObjectId(bookingPayload.sellerId),
+          shop: bookingPayload.shop._id,
+          serviceId: new mongoose.Types.ObjectId(bookingPayload.serviceId),
+          serviceStartTime: bookingPayload.serviceStartTime,
+          shopTimeSlot: shopTimeSlot?._id,
+          totalAmount: bookingPayload.totalAmount,
+          processingFees: bookingPayload.processingFees,
+        },
+      ],
+      { session },
+    )
+
+    await Transaction.create(
+      [
+        {
+          customer: loggedUser.userId,
+          seller: new mongoose.Types.ObjectId(bookingPayload.sellerId),
+          service: new mongoose.Types.ObjectId(bookingPayload.serviceId),
+          booking: booking[0]._id,
+          amount: bookingPayload.totalAmount,
+          stripeProcessingFee: bookingPayload.processingFees,
+          paymentMethod: bookingPayload.paymentMethod,
+          stripePaymentIntentId: bookingPayload.stripePaymentIntentId,
+          transactionType: TransactionType.PAYMENT,
+          status: AmountStatus.PENDING,
+        },
+      ],
+      { session },
+    )
+
+    await session.commitTransaction()
+    return booking[0]
+  } catch (error) {
+    await session.abortTransaction()
+    throw error
+  } finally {
+    session.endSession()
   }
 }
 

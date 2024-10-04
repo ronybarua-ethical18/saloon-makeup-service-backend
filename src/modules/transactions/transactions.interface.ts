@@ -29,8 +29,8 @@ export interface ITransactions extends Document {
   stripePaymentIntentId: string
   paymentMethod: PaymentMethod
   sellerAmount: number
-  portalAmount: number
+  applicationFee: number
   stripeProcessingFee: number
-  completedAt?: Date
+  isPaymentDisbursed: boolean
   transactionType: TransactionType
 }

@@ -6,11 +6,7 @@ import { ShopTimeSlotsServices } from './shop_timeslots.service'
 
 const createShopTimeSlots = tryCatchAsync(
   async (req: Request, res: Response) => {
-    const loggedUser = req.user as {
-      userId: mongoose.Types.ObjectId
-      role: string
-    }
-    await ShopTimeSlotsServices.createShopTimeSlots(loggedUser, req.body)
+    await ShopTimeSlotsServices.createShopTimeSlots(req.body)
 
     sendResponse<{ url: string }>(res, {
       statusCode: 200,

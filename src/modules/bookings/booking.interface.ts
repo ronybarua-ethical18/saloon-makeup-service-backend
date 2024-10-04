@@ -23,9 +23,10 @@ export interface IBooking extends Document {
   seller: mongoose.Types.ObjectId
   shop: mongoose.Types.ObjectId
   serviceId: mongoose.Types.ObjectId
+  shopTimeSlot: mongoose.Types.ObjectId
   serviceStartTime: string
-  serviceEndTime: string
-  serviceDayOfWeek: DayOfWeeks
+  totalAmount: number
+  processingFees: number
   status: BookingStatusList
   notes: string
 }

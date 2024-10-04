@@ -8,5 +8,6 @@ export interface ITimeSlot {
 // Interface for the stripe account document
 export interface IShopTimeSlots extends Document {
   shop: mongoose.Types.ObjectId
+  slotFor: Date
   timeSlots: ITimeSlot[]
 }
