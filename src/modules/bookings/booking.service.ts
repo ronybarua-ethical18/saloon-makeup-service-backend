@@ -213,10 +213,17 @@ const getAllBookings = async (
       .sort(sortCondition)
       .limit(limit)
       .skip(skip)
-      .populate('customer')
-      .populate('seller')
-      .populate('serviceId')
-      .populate('shop')
+      .populate([
+        { path: 'customer', select: 'firstName lastName phone' },
+        { path: 'seller', select: 'firstName lastName phone' },
+        { path: 'serviceId', select: 'name category subCategory price' },
+        {
+          path: 'shop',
+          select: 'shopName location maxResourcePerHour serviceTime',
+        },
+        // { path: 'shopTimeSlot', select: 'slotFor' }
+      ])
+      .lean()
   }
 
   const total = await BookingModel.countDocuments()

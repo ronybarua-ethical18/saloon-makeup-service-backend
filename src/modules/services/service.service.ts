@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status'
 import ApiError from '../../errors/ApiError'
-import { IService } from './service.interface'
+import { IService, ServiceStatusList } from './service.interface'
 import { ServiceModel } from './service.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
@@ -69,6 +69,7 @@ const updateService = async (
   serviceId: mongoose.Types.ObjectId,
   updatePayload: object,
 ): Promise<IService | null> => {
+  console.log('updatePayload', updatePayload)
   const queryPayload = {
     _id: serviceId,
   } as {
@@ -176,8 +177,10 @@ const getTopServices = async (
   queryOptions: IPaginationOptions,
 ): Promise<IGenericResponse<IService[]>> => {
   const { page, limit } = paginationHelpers.calculatePagination(queryOptions)
-  const services = await ServiceModel.find()
-    .sort({ createdAt: -1 })
+  const services = await ServiceModel.find({
+    status: ServiceStatusList.APPROVED,
+  })
+    .sort({ updatedAt: -1 })
     .populate('shop', 'shopName serviceTime')
     .limit(limit)
 
