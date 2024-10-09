@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - MONGO_URI=mongodb+srv://ronybaruaethical18:JgANPFVog8qYsFUq@cluster0.szhilzm.mongodb.net/saloon-service
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
