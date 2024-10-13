@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status'
 // import moment from 'moment'
+
 import ApiError from '../../errors/ApiError'
-import { DayOfWeeks, IBooking } from './booking.interface'
+import { BookingStatusList, DayOfWeeks, IBooking } from './booking.interface'
 import BookingModel from './booking.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
@@ -13,7 +14,11 @@ import {
   IGenericResponse,
   IPaginationOptions,
 } from '../../shared/interfaces/common.interface'
-import { bookingsAggregationPipeline, generateId } from './booking.utils'
+import {
+  bookingsAggregationPipeline,
+  generateId,
+  isServiceDateTimeAtLeastOneHourInPast,
+} from './booking.utils'
 import ShopModel from '../shop/shop.model'
 import { IShopDocument } from '../shop/shop.interface'
 import { ShopTimeSlotsServices } from '../shop_timeslots/shop_timeslots.service'
@@ -26,6 +31,7 @@ import {
 } from '../transactions/transactions.interface'
 import { getTotals } from '../services/service.utils'
 import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
+import { SentrySetContext } from '../../config/sentry'
 
 interface IBookingPayload {
   serviceDate: string
@@ -172,6 +178,55 @@ const updateBooking = async (
 
   return updateBooking
 }
+const verifyBooking = async (
+  loggedUser: JwtPayload,
+  bookingId: mongoose.Types.ObjectId,
+): Promise<string | null> => {
+  if (loggedUser.role !== 'seller') {
+    SentrySetContext('Forbidden', {
+      issue: 'You are not allowed to perform the operation because you are not seller',
+    })
+  }
+  const findBooking = await BookingModel.findOne({
+    seller: loggedUser?.userId,
+    _id: bookingId,
+    status: BookingStatusList.BOOKED,
+  }).populate('shopTimeSlot', 'slotFor')
+
+  if (!findBooking) {
+    SentrySetContext('booking not found', {
+      seller: loggedUser?.userId,
+      bookingId: bookingId,
+    })
+    return null
+  }
+
+  const serviceDate = findBooking?.shopTimeSlot as any
+  const serviceTime = findBooking.serviceStartTime
+
+  const isBookingUpdateEligible = isServiceDateTimeAtLeastOneHourInPast(
+    serviceDate?.slotFor,
+    serviceTime,
+  )
+  if (isBookingUpdateEligible) {
+    const pendingTransaction = await Transaction.findOne({
+      booking: bookingId,
+      status: AmountStatus.PENDING,
+    })
+    if (pendingTransaction) {
+      const paymentIntentId = pendingTransaction.stripePaymentIntentId
+      return paymentIntentId
+    } else {
+      SentrySetContext('transaction-not-found-for-booking', {
+        seller: loggedUser?.userId,
+        bookingId: bookingId,
+      })
+      return null
+    }
+  } else {
+    return null
+  }
+}
 
 const deleteBooking = async (
   bookingId: mongoose.Types.ObjectId,
@@ -263,10 +318,11 @@ const getAllBookings = async (
   }
 }
 
-export const SaloonService = {
+export const BookingService = {
   createBooking,
   getAllBookings,
   getBooking,
   updateBooking,
   deleteBooking,
+  verifyBooking,
 }

@@ -37,12 +37,16 @@ router.get(
 router.patch(
   '/:serviceId',
   auth(
-    ENUM_USER_ROLE.SELLER,
-    ENUM_USER_ROLE.ADMIN,
-    ENUM_USER_ROLE.SUPER_ADMIN,
-    ENUM_USER_ROLE.CUSTOMER,
+    ENUM_USER_ROLE.SELLER
   ),
   BookingController.updateBooking,
+)
+router.patch(
+  '/update-many',
+  auth(
+    ENUM_USER_ROLE.SELLER
+  ),
+  BookingController.updateBookings,
 )
 
 router.delete(

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import globalErrorHandler from './errors/globalErrorHandler'
 import ExpressMongoSanitize from 'express-mongo-sanitize'
 import routes from './routes'
+import { initSentry } from './config/sentry'
 const app: Application = express()
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
@@ -16,6 +17,8 @@ declare module 'http' {
     rawBody?: string | object | unknown
   }
 }
+// Initialize Sentry
+initSentry(app);
 
 //parser
 app.use(
