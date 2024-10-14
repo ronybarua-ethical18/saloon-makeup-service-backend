@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser'
 import globalErrorHandler from './errors/globalErrorHandler'
 import ExpressMongoSanitize from 'express-mongo-sanitize'
 import routes from './routes'
-import { initSentry } from './config/sentry'
+import { initSentry, SentryCaptureMessage } from './config/sentry'
 const app: Application = express()
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
@@ -19,6 +19,12 @@ declare module 'http' {
 }
 // Initialize Sentry
 initSentry(app);
+
+// Test Sentry connection
+app.get('/api/v1/test-sentry', (req, res) => {
+  SentryCaptureMessage('Testing Sentry connection');
+  res.send('Test Sentry triggered');
+});
 
 //parser
 app.use(

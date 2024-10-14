@@ -19,10 +19,13 @@ export const initSentry = (app: express.Application) => {
     // Set sampling rate for profiling
     // This is relative to tracesSampleRate
     profilesSampleRate: 1.0,
+    debug: true, // Enable debugging for more detailed logs
   })
 
+  Sentry.captureMessage('Sentry is connected!');
   app.use(Sentry.expressErrorHandler());
 }
+
 
 export const SentrycaptureException = Sentry.captureException
 export const SentryCaptureMessage = Sentry.captureMessage

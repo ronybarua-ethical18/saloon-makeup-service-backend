@@ -8,7 +8,7 @@ export function paymentDispatchQueueWorker(): void {
     async (job: Job) => {
       await new Promise(resolve => setTimeout(resolve, 5000))
 
-      console.log('job', job)
+      console.log('payment dispatch job', job?.data)
     },
     {
       connection: {

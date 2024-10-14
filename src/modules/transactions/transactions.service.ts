@@ -23,11 +23,11 @@ const createTransaction = async (
 }
 
 const updateTransaction = async (
-  transactionId: mongoose.Types.ObjectId,
+  paymentIntentId: string,
   updatePayload: object,
 ): Promise<ITransactions | null> => {
   const updateTransaction = await Transaction.findByIdAndUpdate(
-    { transactionId },
+    { stripePaymentIntentId:paymentIntentId },
     { ...updatePayload },
     { new: true },
   )

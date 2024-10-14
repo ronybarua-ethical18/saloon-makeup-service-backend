@@ -17,6 +17,13 @@ export enum DayOfWeeks {
   THURSDAY = 'THURSDAY',
 }
 
+export interface IPaymentDisbursedEssentials {
+  paymentIntentId: string
+  bookingId: mongoose.Types.ObjectId
+  sellerId: mongoose.Types.ObjectId
+  customerId: mongoose.Types.ObjectId
+}
+
 // Interface for the booking document
 export interface IBooking extends Document {
   bookingId: string

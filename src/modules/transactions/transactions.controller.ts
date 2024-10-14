@@ -45,19 +45,17 @@ const getAllTransactions = tryCatchAsync(
 )
 
 const updateTransaction = tryCatchAsync(async (req: Request, res: Response) => {
-  if (typeof req.params.serviceId === 'string') {
-    const result = await TransactionService.updateTransaction(
-      new mongoose.Types.ObjectId(req.params['serviceId']),
-      req.body,
-    )
-
-    sendResponse<ITransactions>(res, {
-      statusCode: 200,
-      success: true,
-      message: 'Transaction updated successfully',
-      data: result,
-    })
-  }
+  const paymentIntentId = 'sfjkshkfsdf'
+  const result = await TransactionService.updateTransaction(
+    paymentIntentId,
+    req.body,
+  )
+  sendResponse<ITransactions>(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Transaction updated successfully',
+    data: result,
+  })
 })
 
 const deleteTransaction = tryCatchAsync(async (req: Request, res: Response) => {

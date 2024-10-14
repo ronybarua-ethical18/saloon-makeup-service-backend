@@ -1,12 +1,10 @@
 // queue.ts
 import { Job, Queue } from 'bullmq'
-import redis from '../../config/redis'
+import { redisClient } from '../../config/redis'
+import { paymentDispatchQueueWorker } from './paymentQueueWorker'
 
 export const paymentDispatchQueue = new Queue('paymentDispatchQueue', {
-  connection: {
-    host: redis.REDIS_URI,
-    port: redis.REDIS_PORT,
-  },
+  connection: redisClient
 })
 
 const DEFAULT_CONFIG = {
@@ -26,3 +24,5 @@ export async function addJobToPaymentDispatchQueue<T>(
     DEFAULT_CONFIG,
   )
 }
+
+paymentDispatchQueueWorker()

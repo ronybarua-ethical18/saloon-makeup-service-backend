@@ -41,7 +41,7 @@ router.patch(
   ),
   BookingController.updateBooking,
 )
-router.patch(
+router.put(
   '/update-many',
   auth(
     ENUM_USER_ROLE.SELLER

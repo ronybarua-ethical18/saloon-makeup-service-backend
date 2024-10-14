@@ -83,6 +83,7 @@ export const generateId = (prefix: string, amount: number): string => {
     10000000 + Math.random() * 90000000,
   )}`
 }
+
 export const isServiceDateTimeAtLeastOneHourInPast = (
   serviceDateStr: string,
   serviceTimeStr: string,
@@ -103,10 +104,9 @@ export const isServiceDateTimeAtLeastOneHourInPast = (
 
   // Check if the current time is at least one hour after the service time
   if (currentDateTime.isBefore(oneHourAfterServiceTime)) {
-    throw new Error(
-      'The current time must be at least one hour after the service date and time',
-    )
+    return false
   }
 
-  return true // Return true if the current time is at least one hour after the service date and time
+  // Return true if the current time is at least one hour after the service date and time
+  return true
 }

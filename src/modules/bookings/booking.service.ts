@@ -3,7 +3,12 @@ import httpStatus from 'http-status'
 // import moment from 'moment'
 
 import ApiError from '../../errors/ApiError'
-import { BookingStatusList, DayOfWeeks, IBooking } from './booking.interface'
+import {
+  BookingStatusList,
+  DayOfWeeks,
+  IBooking,
+  IPaymentDisbursedEssentials,
+} from './booking.interface'
 import BookingModel from './booking.model'
 import { JwtPayload } from 'jsonwebtoken'
 import { ENUM_USER_ROLE } from '../../shared/enums/user.enum'
@@ -31,7 +36,7 @@ import {
 } from '../transactions/transactions.interface'
 import { getTotals } from '../services/service.utils'
 import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
-import { SentrySetContext } from '../../config/sentry'
+import { SentryCaptureMessage, SentrySetContext } from '../../config/sentry'
 
 interface IBookingPayload {
   serviceDate: string
@@ -148,28 +153,9 @@ const getBooking = async (
   return booking
 }
 const updateBooking = async (
-  loggedUser: JwtPayload,
   bookingId: mongoose.Types.ObjectId,
   updatePayload: object,
 ): Promise<IBooking | null> => {
-  let query
-
-  if (loggedUser.role === 'admin' || loggedUser.role === 'super_admin') {
-    query = { _id: bookingId }
-  } else {
-    query = {
-      $or: [
-        { _id: bookingId, customer: loggedUser.userId },
-        { _id: bookingId, seller: loggedUser.userId },
-      ],
-    }
-  }
-
-  const booking = await BookingModel.findOne(query)
-
-  if (!booking) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Booking not found')
-  }
   const updateBooking = await BookingModel.findByIdAndUpdate(
     { _id: bookingId },
     { ...updatePayload },
@@ -181,10 +167,11 @@ const updateBooking = async (
 const verifyBooking = async (
   loggedUser: JwtPayload,
   bookingId: mongoose.Types.ObjectId,
-): Promise<string | null> => {
+): Promise<IPaymentDisbursedEssentials | null> => {
   if (loggedUser.role !== 'seller') {
     SentrySetContext('Forbidden', {
-      issue: 'You are not allowed to perform the operation because you are not seller',
+      issue:
+        'You are not allowed to perform the operation because you are not seller',
     })
   }
   const findBooking = await BookingModel.findOne({
@@ -198,6 +185,9 @@ const verifyBooking = async (
       seller: loggedUser?.userId,
       bookingId: bookingId,
     })
+
+    // Capture the message in Sentry for monitoring
+    SentryCaptureMessage('Booking not found for update')
     return null
   }
 
@@ -215,7 +205,12 @@ const verifyBooking = async (
     })
     if (pendingTransaction) {
       const paymentIntentId = pendingTransaction.stripePaymentIntentId
-      return paymentIntentId
+      return {
+        paymentIntentId,
+        bookingId,
+        sellerId: findBooking.seller,
+        customerId: findBooking.customer,
+      }
     } else {
       SentrySetContext('transaction-not-found-for-booking', {
         seller: loggedUser?.userId,
@@ -224,6 +219,14 @@ const verifyBooking = async (
       return null
     }
   } else {
+    SentrySetContext('Booking update is not eligible for time slot', {
+      seller: loggedUser?.userId,
+      bookingId: bookingId,
+    })
+    // Capture the message in Sentry for monitoring
+    SentryCaptureMessage(
+      'Service time mismatched error: Current time is not valid.',
+    )
     return null
   }
 }

@@ -62,13 +62,7 @@ const getBooking = tryCatchAsync(async (req: Request, res: Response) => {
 })
 
 const updateBooking = tryCatchAsync(async (req: Request, res: Response) => {
-  const loggedUser = req.user as {
-    userId: mongoose.Types.ObjectId
-    role: string
-  }
-  if (typeof req.params.bookingId === 'string') {
     const result = await BookingService.updateBooking(
-      loggedUser,
       new mongoose.Types.ObjectId(req.params['bookingId']),
       req.body,
     )
@@ -79,7 +73,6 @@ const updateBooking = tryCatchAsync(async (req: Request, res: Response) => {
       message: 'Booking updated successfully',
       data: result,
     })
-  }
 })
 
 const updateBookings = tryCatchAsync(async (req: Request, res: Response) => {
@@ -112,26 +105,28 @@ const updateBookings = tryCatchAsync(async (req: Request, res: Response) => {
     {
       _id: '66ffa6477cd68b5cd362c3d8',
       serviceStartTime: '10:00AM',
-      status: 'BOOKED',
+      status: 'COMPLETED',
     },
   ]
 
   console.log("bookings", bookings)
 
-  const filteredBookings = bookings.map(async booking => {
-    const processedBooking = await BookingService.verifyBooking(
-      loggedUser,
-      new mongoose.Types.ObjectId(booking?._id),
-    )
-    return processedBooking
-  })
+  const filteredBookings = await Promise.all(
+    bookings.map(async (booking) => {
+      const processedBooking = await BookingService.verifyBooking(
+        loggedUser,
+        new mongoose.Types.ObjectId(booking?._id)
+      );
+      return processedBooking; // Return the processed booking
+    })
+  ).then((results) => results.filter((booking) => booking)); 
 
   console.log('filtered bookings', filteredBookings)
 
   if (filteredBookings.length > 0) {
     for (const booking of filteredBookings) {
       addJobToPaymentDispatchQueue(booking).then(() =>
-        console.log('Job added to queue'),
+        console.log('Job added to payment dispatch queue'),
       )
     }
     return sendResponse<IBooking>(res, {
