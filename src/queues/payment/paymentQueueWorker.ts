@@ -1,14 +1,14 @@
 // worker.ts
 import { Job, Worker } from 'bullmq'
 import redis from '../../config/redis'
+import { paymentDisbursed } from '../utils/payment.utils'
 
 export function paymentDispatchQueueWorker(): void {
   const worker = new Worker(
     'paymentDispatchQueue',
     async (job: Job) => {
       await new Promise(resolve => setTimeout(resolve, 5000))
-
-      console.log('payment dispatch job', job?.data)
+      await paymentDisbursed(job?.data?.booking)
     },
     {
       connection: {
@@ -26,7 +26,7 @@ export function paymentDispatchQueueWorker(): void {
 
   worker.on('failed', async (job: Job | undefined) => {
     if (job) {
-      console.log('failed job', job.id)
+      console.log('failed job with booking id:', job.data?.booking?.bookingId)
     } else {
       console.debug('Job failed, but no job information available.')
     }

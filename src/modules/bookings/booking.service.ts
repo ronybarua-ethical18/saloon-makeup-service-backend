@@ -8,6 +8,7 @@ import {
   DayOfWeeks,
   IBooking,
   IPaymentDisbursedEssentials,
+  PopulatedBooking,
 } from './booking.interface'
 import BookingModel from './booking.model'
 import { JwtPayload } from 'jsonwebtoken'
@@ -37,6 +38,7 @@ import {
 import { getTotals } from '../services/service.utils'
 import { queryFieldsManipulation } from '../../helpers/queryFieldsManipulation'
 import { SentryCaptureMessage, SentrySetContext } from '../../config/sentry'
+import { toFixConverter } from '../../utils/toFixConverter'
 
 interface IBookingPayload {
   serviceDate: string
@@ -92,7 +94,10 @@ const createBooking = async (
       session,
     )
 
-    const bookingId = generateId('SVBA', bookingPayload.totalAmount)
+    const totalAmount = bookingPayload.totalAmount
+    const bookingId = generateId('SVBA', totalAmount)
+    const applicationFeeAmount = toFixConverter(totalAmount * 0.1) // 10% fee for the platform owner
+    const sellerAmount = toFixConverter(totalAmount - applicationFeeAmount)
 
     const booking = await BookingModel.create(
       [
@@ -126,6 +131,8 @@ const createBooking = async (
           stripePaymentIntentId: bookingPayload.stripePaymentIntentId,
           transactionType: TransactionType.PAYMENT,
           status: AmountStatus.PENDING,
+          applicationFee: applicationFeeAmount,
+          sellerAmount: sellerAmount,
         },
       ],
       { session },
@@ -156,6 +163,7 @@ const updateBooking = async (
   bookingId: mongoose.Types.ObjectId,
   updatePayload: object,
 ): Promise<IBooking | null> => {
+  console.log('update booking payload from queue', updatePayload)
   const updateBooking = await BookingModel.findByIdAndUpdate(
     { _id: bookingId },
     { ...updatePayload },
@@ -168,66 +176,92 @@ const verifyBooking = async (
   loggedUser: JwtPayload,
   bookingId: mongoose.Types.ObjectId,
 ): Promise<IPaymentDisbursedEssentials | null> => {
+  // Check if the logged user is a seller
   if (loggedUser.role !== 'seller') {
     SentrySetContext('Forbidden', {
-      issue:
-        'You are not allowed to perform the operation because you are not seller',
+      issue: 'Operation not allowed - User is not a seller',
     })
+    SentryCaptureMessage('Unauthorized booking verification attempt')
+    return null
   }
+
+  // Find the booking with necessary relationships
   const findBooking = await BookingModel.findOne({
-    seller: loggedUser?.userId,
+    seller: loggedUser.userId,
     _id: bookingId,
     status: BookingStatusList.BOOKED,
-  }).populate('shopTimeSlot', 'slotFor')
+  })
+    .populate<PopulatedBooking>([
+      { path: 'shopTimeSlot', select: 'slotFor' },
+      { path: 'seller', select: 'firstName lastName email phone' },
+      { path: 'customer', select: 'firstName lastName email phone' },
+      { path: 'serviceId', select: 'name' },
+      { path: 'shop', select: 'shopName' },
+    ])
+    .lean()
 
+  // Return early if booking not found
   if (!findBooking) {
-    SentrySetContext('booking not found', {
-      seller: loggedUser?.userId,
-      bookingId: bookingId,
+    SentrySetContext('Booking not found', {
+      seller: loggedUser.userId,
+      bookingId,
     })
-
-    // Capture the message in Sentry for monitoring
-    SentryCaptureMessage('Booking not found for update')
+    SentryCaptureMessage('Booking not found for verification')
     return null
   }
 
-  const serviceDate = findBooking?.shopTimeSlot as any
+  // Validate if the booking is eligible for update based on service time
+  const { slotFor: serviceDate } = findBooking.shopTimeSlot as any
   const serviceTime = findBooking.serviceStartTime
 
-  const isBookingUpdateEligible = isServiceDateTimeAtLeastOneHourInPast(
-    serviceDate?.slotFor,
+  const isBookingEligible = isServiceDateTimeAtLeastOneHourInPast(
+    serviceDate,
     serviceTime,
   )
-  if (isBookingUpdateEligible) {
-    const pendingTransaction = await Transaction.findOne({
-      booking: bookingId,
-      status: AmountStatus.PENDING,
+
+  if (!isBookingEligible) {
+    SentrySetContext('Booking update not eligible for time slot', {
+      seller: loggedUser.userId,
+      bookingId,
     })
-    if (pendingTransaction) {
-      const paymentIntentId = pendingTransaction.stripePaymentIntentId
-      return {
-        paymentIntentId,
-        bookingId,
-        sellerId: findBooking.seller,
-        customerId: findBooking.customer,
-      }
-    } else {
-      SentrySetContext('transaction-not-found-for-booking', {
-        seller: loggedUser?.userId,
-        bookingId: bookingId,
-      })
-      return null
-    }
-  } else {
-    SentrySetContext('Booking update is not eligible for time slot', {
-      seller: loggedUser?.userId,
-      bookingId: bookingId,
-    })
-    // Capture the message in Sentry for monitoring
     SentryCaptureMessage(
-      'Service time mismatched error: Current time is not valid.',
+      'Booking is not eligible for update due to invalid service time',
     )
     return null
+  }
+
+  // Find the pending transaction for the booking
+  const pendingTransaction = await Transaction.findOne({
+    booking: bookingId,
+    status: AmountStatus.PENDING,
+  })
+
+  // Return early if no pending transaction is found
+  if (!pendingTransaction) {
+    SentrySetContext('Transaction not found for booking', {
+      seller: loggedUser.userId,
+      bookingId,
+    })
+    SentryCaptureMessage('Pending transaction not found for the booking')
+    return null
+  }
+
+  const seller = findBooking?.seller || {}
+  const customer = findBooking?.customer || {}
+
+  // Return the required payment disbursement details
+  return {
+    paymentIntentId: pendingTransaction.stripePaymentIntentId,
+    bookingId,
+    sellerId: seller._id,
+    customerId: customer._id,
+    serviceName:findBooking.serviceId.name,
+    sellerName: `${seller?.firstName} ${seller.lastName}`,
+    sellerEmail: seller.email,
+    customerName: `${customer.firstName} ${customer.lastName}`,
+    customerEmail: customer.email,
+    shopName: findBooking.shop.shopName,
+    totalAmount: findBooking.totalAmount,
   }
 }
 

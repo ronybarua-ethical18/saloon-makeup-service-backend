@@ -12,7 +12,7 @@ const sendEmail = async (
 ): Promise<void> => {
   try {
     const reports = await transporter.sendMail({
-      from: '"StyleVibe"',
+      from: '"Style Vibe Portal"',
       to: receiverEmail,
       subject: context.subject,
       template: template,

@@ -7,6 +7,10 @@ const bookingSchema = new mongoose.Schema<IBooking>(
       type: String,
       requried: true,
     },
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
     customer: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     seller: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     shop: { type: Schema.Types.ObjectId, ref: 'shop', required: true },
@@ -25,6 +29,16 @@ const bookingSchema = new mongoose.Schema<IBooking>(
   },
   { timestamps: true },
 )
+
+// Pre-save hook to format all number fields
+bookingSchema.pre('save', function (next) {
+  const booking = this as IBooking
+
+  // Format the number fields with two decimal places
+  booking.totalAmount = Math.round(booking.totalAmount * 100) / 100
+
+  next()
+})
 
 // Create and export the mongoose model
 const BookingModel = mongoose.model<IBooking>('booking', bookingSchema)

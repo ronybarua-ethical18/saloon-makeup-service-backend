@@ -17,11 +17,45 @@ export enum DayOfWeeks {
   THURSDAY = 'THURSDAY',
 }
 
+interface PopulatedSellerOrCustomer {
+  _id: mongoose.Types.ObjectId
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+}
+
+interface PopulatedShopTimeSlot {
+  slotFor: Date
+}
+
+interface PopulatedService {
+  name: string
+}
+interface PopulatedShop {
+  shopName: string
+}
+
+export interface PopulatedBooking {
+  seller: PopulatedSellerOrCustomer
+  customer: PopulatedSellerOrCustomer
+  shopTimeSlot: PopulatedShopTimeSlot
+  serviceId: PopulatedService
+  shop: PopulatedShop
+}
+
 export interface IPaymentDisbursedEssentials {
   paymentIntentId: string
   bookingId: mongoose.Types.ObjectId
   sellerId: mongoose.Types.ObjectId
   customerId: mongoose.Types.ObjectId
+  serviceName:string
+  totalAmount: number
+  sellerName: string
+  customerName: string
+  sellerEmail: string
+  customerEmail: string
+  shopName: string
 }
 
 // Interface for the booking document

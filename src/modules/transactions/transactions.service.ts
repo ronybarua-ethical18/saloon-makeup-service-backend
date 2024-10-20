@@ -26,7 +26,9 @@ const updateTransaction = async (
   paymentIntentId: string,
   updatePayload: object,
 ): Promise<ITransactions | null> => {
-  const updateTransaction = await Transaction.findByIdAndUpdate(
+
+  console.log("update transaction payload from queue", updatePayload)
+  const updateTransaction = await Transaction.findOneAndUpdate(
     { stripePaymentIntentId:paymentIntentId },
     { ...updatePayload },
     { new: true },

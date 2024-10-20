@@ -17,7 +17,10 @@
     "prepush": "yarn build"
   },
   "lint-staged": {
-    "src/**/*.ts": "yarn lint-prettier"
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

@@ -8,9 +8,9 @@ export const paymentDispatchQueue = new Queue('paymentDispatchQueue', {
 })
 
 const DEFAULT_CONFIG = {
-  attempts:2,
-  removeOnComplete: false,
-  removeOnFail: false,
+  attempts:1,
+  removeOnComplete: true,
+  removeOnFail: true,
   // delay: 5000,
 }
 
