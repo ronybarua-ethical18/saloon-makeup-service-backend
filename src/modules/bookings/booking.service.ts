@@ -175,7 +175,7 @@ const updateBooking = async (
 const verifyBooking = async (
   loggedUser: JwtPayload,
   bookingId: mongoose.Types.ObjectId,
-): Promise<IPaymentDisbursedEssentials | null> => {
+): Promise<IPaymentDisbursedEssentials  | null> => {
   // Check if the logged user is a seller
   if (loggedUser.role !== 'seller') {
     SentrySetContext('Forbidden', {
@@ -251,8 +251,9 @@ const verifyBooking = async (
 
   // Return the required payment disbursement details
   return {
-    paymentIntentId: pendingTransaction.stripePaymentIntentId,
     bookingId,
+    paymentIntentId: pendingTransaction.stripePaymentIntentId,
+    customerBookingId:findBooking.bookingId,
     sellerId: seller._id,
     customerId: customer._id,
     serviceName:findBooking.serviceId.name,

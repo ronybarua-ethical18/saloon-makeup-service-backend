@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose'
 import httpStatus from 'http-status'
 import { SentryCaptureMessage, SentrySetContext } from '../../config/sentry'
@@ -11,10 +12,8 @@ import { BookingService } from '../../modules/bookings/booking.service'
 import { TransactionService } from '../../modules/transactions/transactions.service'
 import { AmountStatus } from '../../modules/transactions/transactions.interface'
 import ApiError from '../../errors/ApiError'
-import sendEmail from '../../services/mail/sendMail'
-import { PAYMENT_DISBURSEMENT_SELLER } from '../../services/mail/constants'
-import mailTrackersModel from '../../modules/mail-trackers/mail-trackers.model'
-import { EmailTypes } from '../../modules/mail-trackers/mail-trackers.interface'
+import { addJobToEmailDispatchQueue } from '../emails/emailQueue'
+import { emailPayloadsByUser } from './email.utils'
 
 export const paymentDisbursed = async (
   bookingDetails: IPaymentDisbursedEssentials,
@@ -23,8 +22,10 @@ export const paymentDisbursed = async (
     sellerId,
     paymentIntentId,
     bookingId,
-    customerName,
+    customerBookingId,
     customerId,
+    customerName,
+    customerEmail,
     sellerEmail,
     sellerName,
     serviceName,
@@ -71,31 +72,50 @@ export const paymentDisbursed = async (
       )
     }
 
-    await sendEmail(
-      [sellerEmail, 'ronybarua.business23@gmail.com'],
-      {
-        subject: 'Payment Disbursement Confirmation',
-        data: {
-          amount: updatedTransaction?.sellerAmount,
-          sellerName,
-          serviceName,
-          customerName,
-        },
-      },
-      PAYMENT_DISBURSEMENT_SELLER,
+    const ownerPayload = {
+      owner: 'Style Vibe Director',
+      applicationFee: updatedTransaction.applicationFee,
+      sellerAmount: updatedTransaction.sellerAmount,
+      serviceName,
+      bookingId,
+      customerBookingId,
+      sellerName,
+      sellerEmail,
+      stripeAccountId: sellerStripeAccount.stripeAccountId,
+      customerName,
+      customerEmail,
+    }
+    const sellerPayload = {
+      amount: updatedTransaction?.sellerAmount,
+      transactionId: updatedTransaction.transactionId,
+      customerBookingId,
+      sellerId,
+      sellerEmail,
+      sellerName,
+      serviceName,
+      customerName,
+      customerEmail,
+    }
+    const customerPayload = {
+      customerId,
+      serviceName,
+      customerBookingId,
+      transactionId: updatedTransaction.transactionId,
+      customerEmail,
+      customerName,
+    }
+
+    const emailPayloads = emailPayloadsByUser(
+      ownerPayload,
+      sellerPayload,
+      customerPayload,
     )
 
-    await mailTrackersModel.create({
-      subject: 'Payment Disbursement Confirmation',
-      recipient: [sellerEmail],
-      emailType: EmailTypes.PAYMENT_DISBURSEMENT_EMAIL,
-      isMailSent: true,
-      essentialPayload: {
-        seller: sellerId,
-        customer: customerId,
-        booking: bookingId,
-      },
-    })
+    for (const emailPayload of emailPayloads) {
+      addJobToEmailDispatchQueue(emailPayload).then(() =>
+        console.log('Job added to email dispatch queue'),
+      )
+    }
   } catch (error: any) {
     SentrySetContext('Payment Disbursed Error', error)
     SentryCaptureMessage(`Payment disbursed error: ${error.message}`)

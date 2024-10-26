@@ -58,7 +58,7 @@
               "
             >
               Hi
-              {{customerName}},
+              <strong>{{customerName}}</strong>
             </h3>
            
             <h3
@@ -82,9 +82,9 @@
                 line-height: 34px;
               "
             >
-              If there was an issue with the service you booked with {{salonName}}, we are here to help. You can create a dispute if anything went wrong.
+              If there was an issue with the service <strong  style="font-weight: 600;">{{serviceName}}</strong> with  booking id <strong  style="font-weight: 600;">{{customerBookingId}}</strong> and transaction id <strong  style="font-weight: 600;">{{transactionId}}</strong> we are here to help. You can create a dispute if anything went wrong.
             </h3>
-
+ 
             <div style="text-align: center">
               <a href="{{disputeLink}}">
                 <button

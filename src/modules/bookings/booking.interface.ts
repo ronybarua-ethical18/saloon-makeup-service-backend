@@ -46,6 +46,7 @@ export interface PopulatedBooking {
 
 export interface IPaymentDisbursedEssentials {
   paymentIntentId: string
+  customerBookingId:string
   bookingId: mongoose.Types.ObjectId
   sellerId: mongoose.Types.ObjectId
   customerId: mongoose.Types.ObjectId

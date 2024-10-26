@@ -57,7 +57,7 @@
                 text-align: left;
               "
             >
-              Hi {{sellerName}},
+              Hi <strong  style="font-weight: 600;">{{sellerName}}</strong>,
             </h3>
 
             <h3
@@ -93,6 +93,28 @@
                 line-height: 34px;
               "
             >
+              Booking ID: <span style="font-weight: 900">{{customerBookingId}}</span>
+            </h3>
+            <h3
+              style="
+                text-align: left;
+                color: #333333;
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 34px;
+              "
+            >
+              Transaction ID: <span style="font-weight: 900">{{transactionId}}</span>
+            </h3>
+            <h3
+              style="
+                text-align: left;
+                color: #333333;
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 34px;
+              "
+            >
               Amount: <span style="font-weight: 900">€{{amount}}</span>
             </h3>
 
@@ -106,6 +128,17 @@
               "
             >
               Customer Name: <span style="font-weight: 900">{{customerName}}</span>
+            </h3>
+            <h3
+              style="
+                text-align: left;
+                color: #333333;
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 34px;
+              "
+            >
+              Customer Email: <span style="font-weight: 900">{{customerEmail}}</span>
             </h3>
 
             <h3

@@ -83,8 +83,8 @@ const updateBookings = tryCatchAsync(async (req: Request, res: Response) => {
 
   const bookings = [
     {
-      _id: '6714fd73fb0c9126a101d60f',
-      serviceStartTime: '5:00PM',
+      _id: '671d1aad4b8b269804161eff',
+      serviceStartTime: '7:00PM',
       status: 'BOOKED',
     },
     {
