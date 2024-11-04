@@ -51,7 +51,9 @@ const getUser = async (
                   .data[0] as Stripe.BankAccount
               ).bank_name
             : null,
-        balance: result?.balanceDetails?.instant_available?.[0]?.amount ? (result.balanceDetails.instant_available[0].amount)/100 : 0,
+        balance: result?.balanceDetails?.instant_available?.[0]?.amount
+          ? result.balanceDetails.instant_available[0].amount / 100
+          : result.balanceDetails.available?.[0]?.amount / 100,
       } as IStripeAccountDetails
 
       responsePayload.stripeAccountDetails = stripeAccountDetails

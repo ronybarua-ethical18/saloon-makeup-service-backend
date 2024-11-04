@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.StripeAccountRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const auth_1 = __importDefault(require("../../middlewares/auth"));
+const user_enum_1 = require("../../shared/enums/user.enum");
+const stripe_accounts_controller_1 = require("./stripe_accounts.controller");
+const router = express_1.default.Router();
+router.post('/connect', (0, auth_1.default)(user_enum_1.ENUM_USER_ROLE.SELLER), stripe_accounts_controller_1.StripeAccountController.createAndConnectStripeAccount);
+router.post('/payment-intent', (0, auth_1.default)(user_enum_1.ENUM_USER_ROLE.CUSTOMER), stripe_accounts_controller_1.StripeAccountController.createPaymentIntentForHold);
+router.post('/capture-payment', (0, auth_1.default)(user_enum_1.ENUM_USER_ROLE.CUSTOMER, user_enum_1.ENUM_USER_ROLE.SELLER, user_enum_1.ENUM_USER_ROLE.ADMIN), stripe_accounts_controller_1.StripeAccountController.captureHeldPayment);
+router.get('/account-details/:accountId', stripe_accounts_controller_1.StripeAccountController.getStripeAccountDetails);
+router.get('/owner-account-details/:accountId', stripe_accounts_controller_1.StripeAccountController.getOwnStripeAccountDetails);
+router.post('/charge', stripe_accounts_controller_1.StripeAccountController.createTestChargeToStripeAccount);
+router.post('/payment-checkout', stripe_accounts_controller_1.StripeAccountController.stripePaymentCheckout);
+router.post('/transfer-amount', stripe_accounts_controller_1.StripeAccountController.transferAmountToConnectedStripeAccount);
+router.post('/connect/webhook', stripe_accounts_controller_1.StripeAccountController.stripeConnectWebhook);
+router.get('/details/:accountId', (0, auth_1.default)(user_enum_1.ENUM_USER_ROLE.SUPER_ADMIN, user_enum_1.ENUM_USER_ROLE.ADMIN), stripe_accounts_controller_1.StripeAccountController.getStripeAccountDetails);
+exports.StripeAccountRoutes = router;
