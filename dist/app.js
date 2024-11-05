@@ -13,7 +13,10 @@ const globalErrorHandler_1 = __importDefault(require("./errors/globalErrorHandle
 const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize"));
 const routes_1 = __importDefault(require("./routes"));
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: '*',
+}));
+app.options('*', (0, cors_1.default)());
 //parser
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
