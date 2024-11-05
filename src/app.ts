@@ -15,6 +15,8 @@ app.use(
   }),
 )
 
+app.options('*', cors());
+
 //parser
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
