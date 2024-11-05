@@ -14,7 +14,18 @@ const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize
 const routes_1 = __importDefault(require("./routes"));
 const sentry_1 = require("./config/sentry");
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)({ origin: 'http://localhost:3000', credentials: true }));
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        // Allow requests from any origin, including requests without an origin (like from Postman)
+        if (origin || origin === undefined) {
+            callback(null, origin);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true, // Allow cookies or other credentials
+}));
 // Initialize Sentry
 (0, sentry_1.initSentry)(app);
 // Test Sentry connection
