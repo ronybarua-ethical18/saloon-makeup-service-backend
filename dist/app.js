@@ -14,9 +14,17 @@ const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize
 const routes_1 = __importDefault(require("./routes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: '*',
+    origin: (origin, callback) => {
+        // Allow requests from any origin, including requests without an origin (like from Postman)
+        if (origin || origin === undefined) {
+            callback(null, origin);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true, // Allow cookies or other credentials
 }));
-app.options('*', (0, cors_1.default)());
 //parser
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
