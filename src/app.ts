@@ -38,7 +38,7 @@ app.use('/api/v1', routes)
 
 //Testing
 app.get('/', async (req: Request, res: Response) => {
-  res.send('App is working with fully functional booking system feature.')
+  res.send('App is working with fully functional booking system feature. Cors origin modified')
 })
 
 //handle not found
