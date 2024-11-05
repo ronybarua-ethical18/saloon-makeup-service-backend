@@ -32,7 +32,7 @@ app.use((0, express_mongo_sanitize_1.default)());
 app.use('/api/v1', routes_1.default);
 //Testing
 app.get('/', async (req, res) => {
-    res.send('App is working with fully functional booking system feature.');
+    res.send('App is working with fully functional booking system feature. Cors origin modified');
 });
 //handle not found
 app.use((req, res, next) => {
