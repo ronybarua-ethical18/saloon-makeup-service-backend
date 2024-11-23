@@ -13,16 +13,17 @@ const app: Application = express()
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests from any origin, including requests without an origin (like from Postman)
       if (origin || origin === undefined) {
         callback(null, origin);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // Allow cookies or other credentials
+    credentials: true,
+    allowedHeaders: ['Authorization', 'Content-Type', 'Origin', 'Accept'], // Add Authorization here
   })
 );
+
 
 declare module 'http' {
   interface IncomingMessage {
